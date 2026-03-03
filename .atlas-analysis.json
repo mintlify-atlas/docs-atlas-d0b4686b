@@ -1,0 +1,68 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "git-cx",
+  "projectDescription": "An AI-powered git subcommand that generates Conventional Commits messages and lets you pick one in a TUI.",
+  "theme": "aspen",
+  "primaryColor": "#3B82F6",
+  "lightColor": "#60A5FA",
+  "darkColor": "#2563EB",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "guides/using-git-cx",
+          "guides/configuration",
+          "guides/ai-providers"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/commands",
+          "reference/config-options",
+          "reference/keyboard-shortcuts"
+        ]
+      },
+      {
+        "group": "Advanced",
+        "pages": [
+          "advanced/custom-providers",
+          "advanced/examples",
+          "advanced/troubleshooting"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "AI-powered Conventional Commits generation",
+    "Interactive TUI for commit message selection",
+    "Multiple AI provider support (Gemini, Copilot, Claude, Codex, OpenAI API, Custom)",
+    "Git config integration",
+    "Customizable commit formatting with emoji and scope support",
+    "Dry-run mode for previewing commits"
+  ],
+  "publicApiSurface": [
+    "git cx",
+    "git cx config",
+    "git cx version",
+    "git cx --provider <name>",
+    "git cx --model <name>",
+    "git cx --candidates <n>",
+    "git cx --timeout <n>",
+    "git cx --command <template>",
+    "git cx --api-base-url <url>",
+    "git cx --use-emoji",
+    "git cx --max-subject-length <n>",
+    "git cx --dry-run",
+    "git cx --config <path>"
+  ]
+}
