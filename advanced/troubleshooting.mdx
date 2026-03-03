@@ -1,0 +1,935 @@
+---
+title: 'Troubleshooting'
+description: 'Common issues and solutions for git-cx'
+---
+
+## Configuration Errors
+
+### Unknown Provider Error
+
+```
+unknown provider: "gemnii" (valid providers: gemini, copilot, claude, codex, api, custom; set via 'git config cx.provider PROVIDER')
+```
+
+**Cause:** Typo in provider name or unsupported provider.
+
+**Solution:**
+```bash
+# Check current provider
+git cx config | grep provider
+
+# Set to a valid provider
+git config --global cx.provider gemini
+```
+
+**Valid providers:** `gemini`, `copilot`, `claude`, `codex`, `api`, `custom`
+
+### Custom Provider Missing Command
+
+```
+cx.command is not set (required for custom provider)
+```
+
+**Cause:** Using `provider = custom` without setting the `cx.command` config.
+
+**Solution:**
+```bash
+git config --global cx.command "your-cli --prompt {prompt}"
+```
+
+The `{prompt}` placeholder is **required**. See [Custom Providers](/advanced/custom-providers) for examples.
+
+### API Provider Missing Configuration
+
+```
+cx.apiBaseUrl is not set (required for api provider)
+```
+
+**Cause:** Using `provider = api` without setting the base URL.
+
+**Solution:**
+```bash
+git config --global cx.apiBaseUrl https://api.openai.com/v1
+git config --global cx.model gpt-4o
+export OPENAI_API_KEY="sk-..."
+```
+
+<Warning>
+The `api` provider requires three settings: `apiBaseUrl`, `model`, and the `OPENAI_API_KEY` environment variable.
+</Warning>
+
+### Invalid API Base URL
+
+```
+cx.apiBaseUrl is invalid: base URL must include scheme and host
+```
+
+**Cause:** Malformed URL in `cx.apiBaseUrl`.
+
+**Solution:**
+```bash
+# Wrong
+git config --global cx.apiBaseUrl api.openai.com
+
+# Correct
+git config --global cx.apiBaseUrl https://api.openai.com/v1
+```
+
+URL must include:
+- **Scheme:** `http://` or `https://`
+- **Host:** `api.openai.com`
+- **Path (optional):** `/v1`
+
+### Invalid Candidates or Timeout
+
+```
+candidates must be greater than 0
+```
+
+```
+timeout must be greater than 0
+```
+
+**Cause:** Invalid values for numeric configs.
+
+**Solution:**
+```bash
+git config --global cx.candidates 3
+git config --global cx.timeout 30
+```
+
+Valid ranges:
+- `candidates`: 1-10 (recommended: 3-5)
+- `timeout`: 10-300 seconds (recommended: 30-60)
+
+### Invalid Subject Length
+
+```
+commit.maxSubjectLength must be >= 0
+```
+
+**Cause:** Negative value for max subject length.
+
+**Solution:**
+```bash
+git config --global cx.commit.maxSubjectLength 100
+```
+
+Use `0` for no limit (not recommended), or typical values: 50, 72, or 100.
+
+## Git Errors
+
+### No Staged Changes
+
+```
+Error: no staged changes. Run 'git add' first.
+```
+
+**Cause:** No files staged for commit.
+
+**Solution:**
+```bash
+# Stage specific files
+git add file1.go file2.go
+
+# Stage all changes
+git add -A
+
+# Stage interactively
+git add -p
+```
+
+Then run:
+```bash
+git cx
+```
+
+<Tip>
+Use `git cx --dry-run` to test commit message generation on unstaged or past commits without staging anything.
+</Tip>
+
+### Git Commit Failed
+
+```
+git commit: error: ...
+```
+
+**Cause:** Git hooks rejecting the commit or other git errors.
+
+**Common reasons:**
+1. **Pre-commit hook failure** - Linting, tests, or other checks failed
+2. **Empty commit** - No actual changes (only whitespace/formatting)
+3. **GPG signing required** - But GPG key not configured
+
+**Solutions:**
+
+```bash
+# Check hook output
+git commit -m "test: check hooks"
+
+# Skip hooks (not recommended)
+git commit --no-verify -m "fix: urgent hotfix"
+
+# Fix GPG signing
+git config --global user.signingkey YOUR_KEY_ID
+git config --global commit.gpgsign true
+```
+
+### Repository Not Initialized
+
+```
+fatal: not a git repository (or any of the parent directories): .git
+```
+
+**Cause:** Running `git cx` outside a git repository.
+
+**Solution:**
+```bash
+# Initialize git repo
+git init
+
+# Or navigate to existing repo
+cd /path/to/your/repo
+```
+
+## Provider Errors
+
+### CLI Provider Not Found
+
+```
+gemini failed: executable file not found in $PATH
+```
+
+**Cause:** Provider CLI not installed or not in PATH.
+
+**Solution:**
+
+<CodeGroup>
+```bash Gemini
+npm install -g @google/generative-ai-cli
+# or
+brew install gemini-cli
+```
+
+```bash Copilot
+gh extension install github/gh-copilot
+```
+
+```bash Claude
+npm install -g @anthropic-ai/claude-cli
+```
+
+```bash Codex
+pip install openai-codex-cli
+```
+</CodeGroup>
+
+Verify installation:
+```bash
+which gemini
+which copilot
+which claude
+which codex
+```
+
+### CLI Provider Authentication Failed
+
+```
+copilot failed: authentication required
+```
+
+**Cause:** Provider CLI not authenticated.
+
+**Solution:**
+
+<CodeGroup>
+```bash Gemini
+gemini config set-key YOUR_API_KEY
+```
+
+```bash Copilot
+gh auth login
+```
+
+```bash Claude
+claude auth login
+```
+
+```bash Codex
+export OPENAI_API_KEY="sk-..."
+```
+</CodeGroup>
+
+### Custom Command Failed
+
+```
+command failed: exit status 1
+```
+
+**Cause:** Your custom command exited with an error.
+
+**Debug steps:**
+
+1. **Test command manually:**
+   ```bash
+   sh -c 'your-cli --prompt "test prompt"'
+   ```
+
+2. **Check stderr output:**
+   ```bash
+   your-cli --prompt "test" 2>&1
+   ```
+
+3. **Verify placeholder replacement:**
+   ```bash
+   # Wrong: missing {prompt}
+   git config cx.command "ollama run codellama"
+   
+   # Correct: includes {prompt}
+   git config cx.command "ollama run codellama {prompt}"
+   ```
+
+4. **Check command exists:**
+   ```bash
+   which your-cli
+   ```
+
+5. **Use absolute path:**
+   ```bash
+   git config cx.command "/usr/local/bin/ollama run codellama {prompt}"
+   ```
+
+## API Errors
+
+### API Request Failed - Authentication
+
+```
+api request failed: 401 Unauthorized
+```
+
+**Cause:** Invalid or missing API key.
+
+**Solution:**
+```bash
+# Set API key
+export OPENAI_API_KEY="sk-..."
+
+# Verify it's set
+echo $OPENAI_API_KEY
+
+# Make it permanent (add to ~/.bashrc or ~/.zshrc)
+echo 'export OPENAI_API_KEY="sk-..."' >> ~/.zshrc
+```
+
+### API Request Failed - Rate Limit
+
+```
+api request failed: 429 Too Many Requests
+```
+
+**Cause:** Exceeded API rate limits.
+
+**Solution:**
+1. **Wait and retry** (rate limits reset after a time window)
+2. **Reduce candidates:**
+   ```bash
+   git config --global cx.candidates 1
+   ```
+3. **Increase timeout** to allow for retry logic:
+   ```bash
+   git config --global cx.timeout 60
+   ```
+4. **Use a different provider temporarily:**
+   ```bash
+   git cx --provider gemini
+   ```
+
+### API Request Failed - Model Not Found
+
+```
+api request failed: model 'gpt-5' not found
+```
+
+**Cause:** Invalid model name for the provider.
+
+**Solution:**
+```bash
+# For OpenAI
+git config --global cx.model gpt-4o
+
+# For Azure OpenAI
+git config --global cx.model gpt-4
+
+# For custom endpoints, check their model list
+curl https://your-api.com/v1/models
+```
+
+### API Request Failed - Invalid Response
+
+```
+failed to parse response: invalid character '<' looking for beginning of value
+```
+
+**Cause:** API returned HTML instead of JSON (often an error page or redirect).
+
+**Debug steps:**
+
+1. **Check API URL:**
+   ```bash
+   git cx config | grep apiBaseUrl
+   ```
+
+2. **Test endpoint manually:**
+   ```bash
+   curl -v https://api.openai.com/v1/chat/completions \
+     -H "Authorization: Bearer $OPENAI_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"model":"gpt-4o","messages":[{"role":"user","content":"test"}]}'
+   ```
+
+3. **Verify scheme (https vs http):**
+   ```bash
+   git config --global cx.apiBaseUrl https://api.openai.com/v1
+   ```
+
+### API Response Missing Choices
+
+```
+api response missing choices
+```
+
+**Cause:** API returned an empty or malformed response.
+
+**Solution:**
+1. Check model availability
+2. Verify API key has proper permissions
+3. Test with a different model
+4. Check provider status page
+
+## Timeout Errors
+
+### Command Timeout
+
+```
+command failed: context deadline exceeded
+```
+
+**Cause:** Provider took longer than the configured timeout.
+
+**Solution:**
+```bash
+# Increase timeout
+git config --global cx.timeout 60
+
+# For very slow providers or large diffs
+git config --global cx.timeout 120
+```
+
+<Note>
+Timeouts apply to each AI request. If using `candidates = 3` with CLI providers that make sequential requests, the total time could be `timeout × candidates`.
+</Note>
+
+### Network Timeout
+
+```
+api request failed: context deadline exceeded
+```
+
+**Cause:** Network issues or slow API response.
+
+**Solution:**
+1. **Check internet connection**
+2. **Increase timeout:**
+   ```bash
+   git config --global cx.timeout 60
+   ```
+3. **Try a different provider**
+4. **Check API status:**
+   - OpenAI: https://status.openai.com
+   - Anthropic: https://status.anthropic.com
+
+## Output Issues
+
+### Empty Commit Message List
+
+**Symptom:** TUI shows no commit message suggestions.
+
+**Causes:**
+
+1. **Provider returned no output:**
+   ```bash
+   # Test provider manually
+   gemini -p "Generate a commit message"
+   ```
+
+2. **Output format incorrect:**
+   - Custom providers must output one message per line
+   - No extra formatting, numbering, or explanations
+
+3. **All output was empty lines:**
+   - Check for trailing newlines or whitespace-only output
+
+**Solution:**
+
+For custom providers, ensure clean output:
+```bash
+# Wrong: includes numbering
+1. feat: add feature
+2. fix: resolve bug
+
+# Correct: clean lines
+feat: add feature
+fix: resolve bug
+```
+
+### Truncated Commit Messages
+
+**Symptom:** Commit messages are cut off mid-word.
+
+**Cause:** `maxSubjectLength` setting truncates messages.
+
+**Solution:**
+```bash
+# Increase limit
+git config --global cx.commit.maxSubjectLength 100
+
+# Or remove limit (not recommended)
+git config --global cx.commit.maxSubjectLength 0
+```
+
+### Malformed Conventional Commits
+
+**Symptom:** AI generates messages not following Conventional Commits format.
+
+**Example:**
+```
+Added new user authentication feature
+Fixed the login bug
+```
+
+**Causes:**
+1. AI model not following instructions
+2. Custom provider not passing prompt correctly
+3. Diff too large (truncated prompt)
+
+**Solutions:**
+
+1. **Try a different model:**
+   ```bash
+   git cx --model gpt-4o  # More accurate than gpt-4o-mini
+   ```
+
+2. **Reduce diff size:**
+   ```bash
+   # Stage fewer files at once
+   git add specific-file.go
+   git cx
+   ```
+
+3. **Use a tested provider:**
+   ```bash
+   git cx --provider gemini
+   ```
+
+## TUI Errors
+
+### TUI Rendering Issues
+
+**Symptom:** Broken UI, overlapping text, or visual glitches.
+
+**Causes:**
+1. Terminal size too small
+2. Terminal emulator compatibility issues
+3. Color scheme conflicts
+
+**Solutions:**
+
+1. **Resize terminal** (minimum 80x24 recommended)
+2. **Try different terminal emulator:**
+   - macOS: iTerm2, Alacritty
+   - Linux: GNOME Terminal, Alacritty
+   - Windows: Windows Terminal, WSL2
+3. **Reset terminal:**
+   ```bash
+   reset
+   git cx
+   ```
+
+### TUI Keyboard Not Working
+
+**Symptom:** Arrow keys, Enter, or other keys don't work in TUI.
+
+**Solutions:**
+
+1. **Check terminal mode:**
+   ```bash
+   echo $TERM  # Should be xterm-256color or similar
+   ```
+
+2. **Set terminal properly:**
+   ```bash
+   export TERM=xterm-256color
+   ```
+
+3. **Try different shell:**
+   ```bash
+   bash -c 'git cx'
+   ```
+
+### TUI Crashes on Launch
+
+```
+TUI error: ...
+```
+
+**Debug steps:**
+
+1. **Run with dry-run to test without TUI:**
+   ```bash
+   git cx --dry-run
+   ```
+
+2. **Check for conflicting environment variables:**
+   ```bash
+   env | grep -i term
+   ```
+
+3. **Update git-cx:**
+   ```bash
+   go install github.com/hayatosc/git-cx@latest
+   ```
+
+## Configuration File Issues
+
+### Config File Not Found
+
+```
+failed to load config file "path/to/config": git config --file path/to/config --list: exit status 128
+```
+
+**Cause:** Config file doesn't exist or isn't readable.
+
+**Solution:**
+```bash
+# Check file exists
+ls -la path/to/config
+
+# Create from example
+cp examples/gemini.gitconfig ~/.git-cx.config
+
+# Use correct path
+git cx --config ~/.git-cx.config
+```
+
+### Config File Invalid Format
+
+```
+failed to load config file: invalid config format
+```
+
+**Cause:** Malformed gitconfig syntax.
+
+**Solution:**
+
+Valid gitconfig format:
+```gitconfig
+[cx]
+  provider = gemini
+  model = gemini-2.0-flash
+
+[cx "commit"]
+  useEmoji = false
+```
+
+Common mistakes:
+```gitconfig
+# Wrong: missing quotes around section name
+[cx commit]
+  useEmoji = false
+
+# Correct: quotes required for subsections
+[cx "commit"]
+  useEmoji = false
+```
+
+Validate syntax:
+```bash
+git config --file your-config.gitconfig --list
+```
+
+## Performance Issues
+
+### Slow Commit Generation
+
+**Symptom:** Takes 30+ seconds to generate commit messages.
+
+**Causes:**
+1. Large diffs (many files or large files)
+2. Slow provider/model
+3. Network latency
+4. Too many candidates
+
+**Solutions:**
+
+1. **Stage fewer files:**
+   ```bash
+   git add -p  # Stage selectively
+   ```
+
+2. **Use faster model:**
+   ```bash
+   git config --global cx.model gemini-2.0-flash
+   git config --global cx.model gpt-4o-mini
+   ```
+
+3. **Reduce candidates:**
+   ```bash
+   git config --global cx.candidates 3
+   ```
+
+4. **Use local provider:**
+   ```bash
+   git config --global cx.provider custom
+   git config --global cx.command "ollama run codellama {prompt}"
+   ```
+
+### High API Costs
+
+**Symptom:** Unexpectedly high API bills.
+
+**Causes:**
+1. Expensive model (e.g., GPT-4)
+2. Many candidates
+3. Large diffs (more tokens)
+4. Frequent commits
+
+**Solutions:**
+
+1. **Switch to cheaper model:**
+   ```bash
+   git config --global cx.model gpt-4o-mini
+   ```
+
+2. **Reduce candidates:**
+   ```bash
+   git config --global cx.candidates 1
+   ```
+
+3. **Use free tier providers:**
+   ```bash
+   git config --global cx.provider gemini
+   ```
+
+4. **Monitor token usage** with API dashboards
+
+## Environment Issues
+
+### Command Not Found
+
+```
+git: 'cx' is not a git command. See 'git --help'.
+```
+
+**Cause:** git-cx not installed or not in PATH.
+
+**Solution:**
+```bash
+# Install
+go install github.com/hayatosc/git-cx@latest
+
+# Verify installation
+which git-cx
+
+# Add Go bin to PATH (add to ~/.bashrc or ~/.zshrc)
+export PATH="$PATH:$(go env GOPATH)/bin"
+
+# Verify
+git cx version
+```
+
+### Permission Denied
+
+```
+permission denied: git-cx
+```
+
+**Cause:** Binary not executable.
+
+**Solution:**
+```bash
+chmod +x $(which git-cx)
+```
+
+### Version Mismatch
+
+**Symptom:** Features not working as documented.
+
+**Solution:**
+```bash
+# Check version
+git cx version
+
+# Update to latest
+go install github.com/hayatosc/git-cx@latest
+```
+
+## Debugging Techniques
+
+### Enable Verbose Logging
+
+```bash
+# Test configuration
+git cx config
+
+# Test without committing
+git cx --dry-run
+
+# Test specific provider
+git cx --dry-run --provider gemini
+```
+
+### Manual Provider Testing
+
+Test providers independently of git-cx:
+
+```bash
+# Gemini
+gemini -p "Generate a commit message for: added login feature"
+
+# Copilot
+copilot -p "Generate a commit message"
+
+# Custom command
+sh -c 'your-cli --prompt "test"'
+
+# API
+curl https://api.openai.com/v1/chat/completions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"gpt-4o","messages":[{"role":"user","content":"test"}]}'
+```
+
+### Check Git Configuration
+
+```bash
+# List all cx.* configs
+git config --get-regexp cx
+
+# Check specific key
+git config --get cx.provider
+
+# Check from file
+git config --file your-config.gitconfig --list
+```
+
+### Inspect Staged Changes
+
+```bash
+# View diff
+git diff --cached
+
+# View stats
+git diff --cached --stat
+
+# Check for binary files
+git diff --cached --numstat
+```
+
+## Getting Help
+
+If you encounter an issue not covered here:
+
+1. **Check version:**
+   ```bash
+   git cx version
+   ```
+
+2. **Test with minimal config:**
+   ```bash
+   git cx --provider gemini --dry-run
+   ```
+
+3. **Gather debug info:**
+   ```bash
+   git cx config
+   git config --get-regexp cx
+   echo $OPENAI_API_KEY | sed 's/./*/g'  # Masked
+   ```
+
+4. **Report issue:** https://github.com/hayatosc/git-cx/issues
+
+Include:
+- git-cx version
+- Provider and model
+- Full error message
+- Configuration (sanitized, no API keys)
+- Operating system and terminal emulator
+
+## Quick Reference
+
+<AccordionGroup>
+  <Accordion title="Provider Not Working">
+    ```bash
+    # Verify provider installed
+    which gemini
+    
+    # Test provider
+    gemini -p "test"
+    
+    # Try different provider
+    git cx --provider copilot
+    ```
+  </Accordion>
+
+  <Accordion title="No Commit Suggestions">
+    ```bash
+    # Check staged changes
+    git diff --cached
+    
+    # Verify provider outputs correctly
+    git cx --dry-run
+    
+    # Increase candidates
+    git config cx.candidates 5
+    ```
+  </Accordion>
+
+  <Accordion title="Timeout Issues">
+    ```bash
+    # Increase timeout
+    git config cx.timeout 60
+    
+    # Test with faster provider
+    git cx --provider gemini
+    
+    # Reduce diff size
+    git add specific-files
+    ```
+  </Accordion>
+
+  <Accordion title="API Errors">
+    ```bash
+    # Verify API key
+    echo $OPENAI_API_KEY
+    
+    # Check API URL
+    git config cx.apiBaseUrl
+    
+    # Test endpoint
+    curl -v https://api.openai.com/v1/models \
+      -H "Authorization: Bearer $OPENAI_API_KEY"
+    ```
+  </Accordion>
+
+  <Accordion title="Configuration Not Applied">
+    ```bash
+    # Check config precedence (flags > file > local > global)
+    git config --get cx.provider        # Local
+    git config --global --get cx.provider  # Global
+    git cx config                       # Effective config
+    
+    # Override all
+    git cx --provider gemini --model gemini-2.0-flash
+    ```
+  </Accordion>
+</AccordionGroup>

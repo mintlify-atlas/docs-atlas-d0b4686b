@@ -1,0 +1,324 @@
+---
+title: "Configuration Options"
+description: "Complete reference for all git-cx configuration keys"
+---
+
+## Overview
+
+git-cx configuration is managed through git config. All configuration keys are under the `cx` namespace. You can set values globally (`--global`) or per-repository (local).
+
+Configuration can be provided through:
+1. Global git config: `git config --global cx.key value`
+2. Local git config: `git config cx.key value`
+3. Config file: `--config path/to/file.gitconfig`
+4. Command-line flags: `--flag value` (highest priority)
+
+---
+
+## Core Options
+
+### cx.provider
+
+<ParamField path="cx.provider" type="string" default="gemini">
+  The AI provider to use for generating commit messages.
+  
+  **Valid values:**
+  - `gemini` - Google Gemini CLI (requires [gemini-cli](https://github.com/google-gemini/gemini-cli))
+  - `copilot` - GitHub Copilot CLI (requires [copilot-cli](https://github.com/github/copilot-cli))
+  - `claude` - Claude Code (requires [claude-code](https://github.com/anthropics/claude-code))
+  - `codex` - Codex CLI (requires [codex](https://github.com/openai/codex))
+  - `api` - OpenAI-compatible API endpoint (requires `cx.apiBaseUrl` and `OPENAI_API_KEY`)
+  - `custom` - Custom CLI command (requires `cx.command`)
+  
+  **Example:**
+  ```bash
+  git config --global cx.provider gemini
+  git config --global cx.provider api
+  ```
+</ParamField>
+
+### cx.model
+
+<ParamField path="cx.model" type="string" default="gemini-3.0-flash">
+  The model name to pass to the AI provider.
+  
+  **Required for:** `api` provider
+  
+  **Optional for:** Other providers (provider-specific defaults apply)
+  
+  **Examples:**
+  ```bash
+  # For Gemini
+  git config --global cx.model gemini-2.5-flash
+  
+  # For OpenAI API
+  git config --global cx.model gpt-4
+  git config --global cx.model gpt-3.5-turbo
+  
+  # For custom endpoints
+  git config --global cx.model custom-model-name
+  ```
+</ParamField>
+
+### cx.candidates
+
+<ParamField path="cx.candidates" type="integer" default="3">
+  Number of commit message candidates to generate.
+  
+  **Constraints:** Must be greater than 0
+  
+  **Example:**
+  ```bash
+  git config --global cx.candidates 5
+  ```
+  
+  <Note>
+  Generating more candidates increases AI provider usage and may take longer to complete.
+  </Note>
+</ParamField>
+
+### cx.timeout
+
+<ParamField path="cx.timeout" type="integer" default="30">
+  Request timeout in seconds for AI provider requests.
+  
+  **Constraints:** Must be greater than 0
+  
+  **Example:**
+  ```bash
+  git config --global cx.timeout 60
+  ```
+  
+  <Note>
+  Increase the timeout if you're generating many candidates or using slower providers.
+  </Note>
+</ParamField>
+
+---
+
+## Provider-Specific Options
+
+### cx.command
+
+<ParamField path="cx.command" type="string">
+  Command template for the `custom` provider. The placeholder `{prompt}` will be replaced with the actual prompt text.
+  
+  **Required for:** `custom` provider
+  
+  **Example:**
+  ```bash
+  git config --global cx.command "mycli --prompt {prompt}"
+  git config --global cx.command "ollama run llama2 {prompt}"
+  ```
+  
+  The command should:
+  - Accept the prompt text (via `{prompt}` placeholder)
+  - Output the generated commit message to stdout
+  - Exit with code 0 on success
+</ParamField>
+
+### cx.apiBaseUrl
+
+<ParamField path="cx.apiBaseUrl" type="string" default="https://api.openai.com/v1">
+  Base URL for the `api` provider. Must be an OpenAI-compatible API endpoint.
+  
+  **Required for:** `api` provider
+  
+  **Constraints:** Must include scheme (http/https) and host
+  
+  **Examples:**
+  ```bash
+  # OpenAI (default)
+  git config --global cx.apiBaseUrl https://api.openai.com/v1
+  
+  # Azure OpenAI
+  git config --global cx.apiBaseUrl https://your-resource.openai.azure.com
+  
+  # Local LLM server
+  git config --global cx.apiBaseUrl http://localhost:8080/v1
+  ```
+</ParamField>
+
+---
+
+## Commit Formatting Options
+
+### cx.commit.useEmoji
+
+<ParamField path="cx.commit.useEmoji" type="boolean" default="false">
+  Prefix the commit type with an emoji according to the gitmoji convention.
+  
+  **Valid values:** `true`, `false`, `yes`, `no`, `on`, `off`, `1`, `0`
+  
+  **Example:**
+  ```bash
+  git config --global cx.commit.useEmoji true
+  ```
+  
+  **Example output with emoji enabled:**
+  ```
+  ✨ feat: add new feature
+  🐛 fix: resolve login bug
+  📝 docs: update README
+  ```
+</ParamField>
+
+### cx.commit.maxSubjectLength
+
+<ParamField path="cx.commit.maxSubjectLength" type="integer" default="100">
+  Maximum length of the commit subject line in characters.
+  
+  **Constraints:** Must be >= 0. Set to 0 to disable length checking.
+  
+  **Example:**
+  ```bash
+  # Standard limit (50 chars as per best practices)
+  git config --global cx.commit.maxSubjectLength 50
+  
+  # Longer limit
+  git config --global cx.commit.maxSubjectLength 72
+  
+  # Disable length checking
+  git config --global cx.commit.maxSubjectLength 0
+  ```
+  
+  <Note>
+  The conventional commit standard recommends keeping subject lines under 50-72 characters for better readability in git logs.
+  </Note>
+</ParamField>
+
+### cx.commit.scopes
+
+<ParamField path="cx.commit.scopes" type="string (multi-value)">
+  List of valid scope candidates for commit messages. When set, git-cx will suggest these scopes in the TUI.
+  
+  **Type:** Multi-value (can be set multiple times)
+  
+  **Examples:**
+  ```bash
+  # Add individual scopes
+  git config --global --add cx.commit.scopes api
+  git config --global --add cx.commit.scopes ui
+  git config --global --add cx.commit.scopes core
+  git config --global --add cx.commit.scopes auth
+  
+  # View configured scopes
+  git config --global --get-all cx.commit.scopes
+  ```
+  
+  **In config file:**
+  ```gitconfig
+  [cx "commit"]
+    scopes = api
+    scopes = ui
+    scopes = core
+    scopes = auth
+  ```
+  
+  <Note>
+  Scopes appear in the TUI during commit message creation, helping maintain consistent scope naming across your project.
+  </Note>
+</ParamField>
+
+---
+
+## Environment Variables
+
+### OPENAI_API_KEY
+
+<ParamField path="OPENAI_API_KEY" type="environment variable">
+  API key for the `api` provider. This is read from the environment, not from git config.
+  
+  **Required for:** `api` provider
+  
+  **Example:**
+  ```bash
+  export OPENAI_API_KEY="sk-..."
+  git cx
+  
+  # Or inline
+  OPENAI_API_KEY="sk-..." git cx
+  ```
+  
+  <Warning>
+  Never commit your API key to git config or version control. Always use environment variables for sensitive credentials.
+  </Warning>
+</ParamField>
+
+---
+
+## Configuration Precedence
+
+Configuration values are resolved in the following order (highest priority first):
+
+1. **Command-line flags** - `git cx --provider gemini`
+2. **Config file** - `git cx --config custom.gitconfig`
+3. **Local git config** - `.git/config`
+4. **Global git config** - `~/.gitconfig`
+5. **Defaults** - Built-in default values
+
+---
+
+## Example Configurations
+
+### Minimal Gemini Setup
+
+```bash
+git config --global cx.provider gemini
+```
+
+### OpenAI API Setup
+
+```bash
+git config --global cx.provider api
+git config --global cx.model gpt-4
+git config --global cx.apiBaseUrl https://api.openai.com/v1
+export OPENAI_API_KEY="sk-..."
+```
+
+### Custom Provider with Ollama
+
+```bash
+git config --global cx.provider custom
+git config --global cx.command "ollama run llama2 {prompt}"
+git config --global cx.candidates 5
+git config --global cx.timeout 60
+```
+
+### Commit Formatting
+
+```bash
+git config --global cx.commit.useEmoji true
+git config --global cx.commit.maxSubjectLength 50
+git config --global --add cx.commit.scopes api
+git config --global --add cx.commit.scopes ui
+git config --global --add cx.commit.scopes core
+```
+
+### Complete Configuration File
+
+Create a file `~/.config/git-cx/config`:
+
+```gitconfig
+[cx]
+  provider = api
+  model = gpt-4
+  candidates = 5
+  timeout = 60
+  apiBaseUrl = https://api.openai.com/v1
+
+[cx "commit"]
+  useEmoji = true
+  maxSubjectLength = 50
+  scopes = api
+  scopes = ui
+  scopes = core
+  scopes = auth
+  scopes = docs
+```
+
+Then use it:
+
+```bash
+git cx --config ~/.config/git-cx/config
+```

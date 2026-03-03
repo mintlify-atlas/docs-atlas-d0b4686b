@@ -1,0 +1,353 @@
+---
+title: 'Custom Providers'
+description: 'Implement custom AI providers using shell commands or external CLIs'
+---
+
+## Overview
+
+The `custom` provider allows you to integrate any AI service or CLI tool that outputs text to stdout. This is useful when you want to use AI services not natively supported by git-cx, or when you need special preprocessing or custom prompt formatting.
+
+## How It Works
+
+The custom provider executes a shell command with a `{prompt}` placeholder that gets replaced with the actual prompt text. Your command should:
+
+1. Accept the prompt as an argument or stdin
+2. Call your AI service/CLI
+3. Output commit message suggestions to stdout (one per line)
+
+<Tip>
+The custom provider runs commands via `sh -c`, so you can use pipes, environment variables, and other shell features.
+</Tip>
+
+## Configuration
+
+### Required Settings
+
+```bash
+git config --global cx.provider custom
+git config --global cx.command "your-cli --prompt {prompt}"
+```
+
+The `{prompt}` placeholder is **required** and will be replaced with the full prompt text that includes:
+- Instructions for generating Conventional Commits
+- The git diff (truncated to 4000 characters if needed)
+- Changed file statistics
+- Any pre-selected type, scope, or subject
+
+### Optional Settings
+
+```bash
+git config --global cx.candidates 3        # Number of suggestions (default: 3)
+git config --global cx.timeout 30          # Timeout in seconds (default: 30)
+```
+
+## Implementation Examples
+
+### Using curl with OpenAI API
+
+```bash
+git config --global cx.provider custom
+git config --global cx.command 'curl -s https://api.openai.com/v1/chat/completions \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"model\":\"gpt-4\",\"messages\":[{\"role\":\"user\",\"content\":\"{prompt}\"}]}" \
+  | jq -r ".choices[0].message.content"'
+```
+
+### Using a Custom Script
+
+Create a script at `~/.local/bin/my-ai-commit`:
+
+```bash
+#!/bin/bash
+# my-ai-commit - Custom commit message generator
+
+PROMPT="$1"
+
+# Call your AI service here
+# Example: using a local LLM
+ollama run llama3.2 "$PROMPT" | grep -E '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)'
+```
+
+Make it executable and configure git-cx:
+
+```bash
+chmod +x ~/.local/bin/my-ai-commit
+git config --global cx.provider custom
+git config --global cx.command "my-ai-commit {prompt}"
+```
+
+### Using Python with Anthropic Claude
+
+```bash
+git config --global cx.provider custom
+git config --global cx.command 'python3 -c "
+import os, sys
+from anthropic import Anthropic
+client = Anthropic(api_key=os.environ[\"ANTHROPIC_API_KEY\"])
+response = client.messages.create(
+    model=\"claude-3-5-sonnet-20241022\",
+    max_tokens=1024,
+    messages=[{\"role\": \"user\", \"content\": sys.argv[1]}]
+)
+print(response.content[0].text)
+" {prompt}'
+```
+
+### Using jq for Post-Processing
+
+When your API returns JSON, pipe through `jq`:
+
+```bash
+git config --global cx.command 'my-api-call {prompt} | jq -r ".suggestions[]"'
+```
+
+## Prompt Structure
+
+Your command receives a prompt in this format:
+
+```
+You are a commit message generator. Based on the following git diff, generate 3 commit message suggestions in Conventional Commits format.
+
+Rules:
+- Format: <type>(<scope>): <subject>
+- type must be one of: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+- scope is optional
+- subject must be lowercase, imperative mood, no period at end
+- subject must be concise (under 72 characters)
+- Output ONLY the commit messages, one per line, no numbering, no explanation
+
+Changed files:
+ internal/ai/custom.go | 47 +++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 47 insertions(+)
+
+Git diff:
+```
+diff --git a/internal/ai/custom.go b/internal/ai/custom.go
+...
+```
+(diff truncated if needed)
+```
+
+<Note>
+If the user has pre-selected a type, scope, or subject in the TUI, those selections are included in the prompt. Your command should respect these constraints.
+</Note>
+
+## Output Format
+
+Your command should output commit messages to stdout, one per line:
+
+```
+feat(api): add user authentication endpoint
+feat(auth): implement JWT token validation
+feat: add user login functionality
+```
+
+The custom provider will:
+1. Execute your command with the full prompt
+2. Parse the output line by line
+3. Extract up to `cx.candidates` non-empty lines
+4. Present them in the TUI for selection
+
+<Warning>
+Lines are trimmed of whitespace. Empty lines are ignored. Ensure your command outputs clean, formatted commit messages without extra formatting, numbering, or explanations.
+</Warning>
+
+## Error Handling
+
+When your command fails, git-cx displays the error from stderr. Common issues:
+
+### Command Not Found
+
+```
+custom command failed: executable file not found in $PATH
+```
+
+**Solution:** Ensure your CLI is installed and in PATH:
+```bash
+which your-cli
+export PATH="$PATH:/path/to/your/cli"
+```
+
+### Command Timeout
+
+```
+custom command failed: context deadline exceeded
+```
+
+**Solution:** Increase the timeout:
+```bash
+git config --global cx.timeout 60
+```
+
+### Empty Output
+
+If your command runs successfully but returns no commit messages, git-cx will show an empty selection. Check that:
+- Your command outputs to stdout (not stderr)
+- Output format is one commit message per line
+- No extra formatting wraps the messages
+
+### Configuration Not Set
+
+```
+cx.command is not set (required for custom provider)
+```
+
+**Solution:** Set the command template:
+```bash
+git config --global cx.command "your-cli {prompt}"
+```
+
+## Testing Your Command
+
+Test your custom command directly before integrating with git-cx:
+
+```bash
+# Get a sample prompt
+echo "Generate 3 commit messages for: added user login" > /tmp/test-prompt.txt
+
+# Test your command
+export PROMPT=$(cat /tmp/test-prompt.txt)
+sh -c 'your-cli {prompt}' "$PROMPT"
+```
+
+Or use the `--dry-run` flag to test without committing:
+
+```bash
+git cx --dry-run --provider custom --command "your-cli {prompt}"
+```
+
+## Advanced: Body and Footer Generation
+
+When the user requests detailed commit messages (body/footer), git-cx calls your command with a different prompt format:
+
+```
+You are a commit message generator. Based on the following git diff, generate a commit body and footer for the subject below.
+
+Rules:
+- Use Conventional Commits style
+- Body is optional; footer is optional
+- Output ONLY the result in this exact format:
+Body:
+<body text or empty>
+Footer:
+<footer text or empty>
+
+Commit type is already selected: feat
+Scope is already selected: api
+Subject is already selected: add user authentication
+
+Changed files:
+...
+
+Git diff:
+...
+```
+
+Your command should output:
+
+```
+Body:
+Implements JWT-based authentication for API endpoints.
+Adds middleware for token validation.
+
+Footer:
+Closes #123
+```
+
+<Tip>
+The custom provider uses the same command for both candidate generation and detail generation. The prompt format changes based on the context.
+</Tip>
+
+## Reference Implementation
+
+See the source code for implementation details:
+- `internal/ai/custom.go:11` - CustomProvider struct
+- `internal/ai/custom.go:19` - NewCustomProvider constructor
+- `internal/ai/custom.go:31` - Generate method
+- `internal/ai/provider.go:99` - runShell function
+
+## Common Use Cases
+
+<AccordionGroup>
+  <Accordion title="Local LLM with Ollama">
+    ```bash
+    git config --global cx.provider custom
+    git config --global cx.command "ollama run codellama {prompt}"
+    git config --global cx.timeout 60
+    ```
+  </Accordion>
+
+  <Accordion title="Self-hosted LLM API">
+    ```bash
+    git config --global cx.provider custom
+    git config --global cx.command 'curl -s http://localhost:11434/api/generate \
+      -d "{\"model\":\"llama3.2\",\"prompt\":\"{prompt}\",\"stream\":false}" \
+      | jq -r .response'
+    ```
+  </Accordion>
+
+  <Accordion title="Pre-processing with Custom Logic">
+    ```bash
+    #!/bin/bash
+    # filter-and-enhance - Adds project-specific context
+    
+    PROMPT="$1"
+    PROJECT_CONTEXT="Project: MyApp, Follows Angular commit style"
+    
+    ENHANCED_PROMPT="$PROJECT_CONTEXT\n\n$PROMPT"
+    
+    echo "$ENHANCED_PROMPT" | your-ai-cli
+    ```
+    
+    Configure:
+    ```bash
+    git config --global cx.command "filter-and-enhance {prompt}"
+    ```
+  </Accordion>
+
+  <Accordion title="Multiple AI Services with Fallback">
+    ```bash
+    #!/bin/bash
+    # multi-ai - Try multiple services
+    
+    PROMPT="$1"
+    
+    # Try primary service
+    RESULT=$(primary-ai "$PROMPT" 2>/dev/null)
+    if [ -n "$RESULT" ]; then
+        echo "$RESULT"
+        exit 0
+    fi
+    
+    # Fallback to secondary
+    secondary-ai "$PROMPT"
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+1. **Keep commands fast** - The TUI waits for your command to complete
+2. **Handle errors gracefully** - Output to stderr for debugging
+3. **Validate output format** - Test with various diffs before deploying
+4. **Use absolute paths** - For scripts not in PATH
+5. **Set appropriate timeouts** - Balance between responsiveness and completion
+6. **Test with edge cases** - Large diffs, binary files, empty diffs
+
+## Comparison with Other Providers
+
+| Feature | Custom | API | CLI Providers |
+|---------|--------|-----|---------------|
+| Flexibility | Highest | Medium | Low |
+| Setup Complexity | Medium | Low | Lowest |
+| Performance | Varies | Fast | Fast |
+| Debugging | Manual | Automatic | Automatic |
+| Prompt Control | Full | None | None |
+
+Use `custom` when you need:
+- Integration with unsupported AI services
+- Custom prompt engineering
+- Pre/post-processing of prompts or outputs
+- Local/offline AI models
+- Special authentication or API requirements

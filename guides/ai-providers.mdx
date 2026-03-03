@@ -1,0 +1,660 @@
+---
+title: AI Providers
+description: Detailed setup guide for each AI provider supported by git-cx
+---
+
+## Overview
+
+git-cx supports six AI provider types, each with different setup requirements and capabilities:
+
+- **gemini** - Google Gemini CLI (default)
+- **copilot** - GitHub Copilot CLI
+- **claude** - Anthropic Claude Code CLI
+- **codex** - OpenAI Codex CLI
+- **api** - Any OpenAI-compatible API endpoint
+- **custom** - Any CLI tool with stdout output
+
+## Gemini (Default)
+
+Google's Gemini AI via the Gemini CLI.
+
+### Installation
+
+<Steps>
+  <Step title="Install Gemini CLI">
+    Follow the [Gemini CLI installation guide](https://github.com/google-gemini/gemini-cli):
+    
+    ```bash
+    # Installation method depends on the CLI tool
+    # Check the repository for latest instructions
+    ```
+  </Step>
+  
+  <Step title="Configure git-cx">
+    ```bash
+    git config --global cx.provider gemini
+    git config --global cx.model gemini-2.0-flash
+    ```
+  </Step>
+  
+  <Step title="Test the setup">
+    ```bash
+    git cx --dry-run
+    ```
+  </Step>
+</Steps>
+
+### Configuration
+
+<CodeGroup>
+```bash Git Config
+git config --global cx.provider gemini
+git config --global cx.model gemini-2.0-flash
+git config --global cx.candidates 3
+git config --global cx.timeout 30
+```
+
+```gitconfig Config File
+[cx]
+  provider = gemini
+  model = gemini-2.0-flash
+  candidates = 3
+  timeout = 30
+```
+
+```bash CLI Flags
+git cx --provider gemini --model gemini-2.0-flash
+```
+</CodeGroup>
+
+### Available Models
+
+- `gemini-2.0-flash` (default, recommended)
+- `gemini-3.0-flash`
+- Check Gemini CLI documentation for latest models
+
+### Technical Details
+
+<Accordion title="How it works">
+  git-cx executes the Gemini CLI with these arguments:
+  
+  ```bash
+  gemini -p "<prompt>" -m gemini-2.0-flash
+  ```
+  
+  Where:
+  - `-p` - Prompt flag (contains diff and instructions)
+  - `-m` - Model flag (optional, uses CLI default if omitted)
+</Accordion>
+
+## GitHub Copilot
+
+GitHub's Copilot AI via the Copilot CLI.
+
+### Installation
+
+<Steps>
+  <Step title="Install Copilot CLI">
+    Install from the [GitHub Copilot CLI repository](https://github.com/github/copilot-cli):
+    
+    ```bash
+    # npm (recommended)
+    npm install -g @githubnext/github-copilot-cli
+    
+    # Or use GitHub CLI
+    gh extension install github/gh-copilot
+    ```
+  </Step>
+  
+  <Step title="Authenticate">
+    ```bash
+    # If using npm install
+    github-copilot-cli auth
+    
+    # If using gh extension
+    gh auth login
+    ```
+  </Step>
+  
+  <Step title="Configure git-cx">
+    ```bash
+    git config --global cx.provider copilot
+    # Model is optional - Copilot uses its default if omitted
+    ```
+  </Step>
+</Steps>
+
+### Configuration
+
+<CodeGroup>
+```bash Git Config
+git config --global cx.provider copilot
+# Optional: specify model
+git config --global cx.model gpt-4o
+git config --global cx.candidates 3
+```
+
+```gitconfig Config File
+[cx]
+  provider = copilot
+  # model = gpt-4o   # omit to use Copilot's default model
+  candidates = 3
+  timeout = 30
+```
+</CodeGroup>
+
+### Available Models
+
+- **Default** - Copilot selects the best available model
+- `gpt-4o` - OpenAI GPT-4 Optimized (if specified)
+- Check Copilot CLI documentation for supported models
+
+<Note>
+  GitHub Copilot requires an active subscription. The CLI uses your GitHub authentication.
+</Note>
+
+### Technical Details
+
+<Accordion title="How it works">
+  git-cx executes:
+  
+  ```bash
+  copilot -p "<prompt>" --model gpt-4o
+  ```
+  
+  Where:
+  - `-p` - Prompt flag
+  - `--model` - Model flag (optional)
+</Accordion>
+
+## Claude
+
+Anthropic's Claude AI via Claude Code CLI.
+
+### Installation
+
+<Steps>
+  <Step title="Install Claude Code CLI">
+    Follow the [Claude Code installation guide](https://github.com/anthropics/claude-code):
+    
+    ```bash
+    # Installation method varies
+    # Check the repository for instructions
+    ```
+  </Step>
+  
+  <Step title="Authenticate">
+    Set up your Anthropic API key if required by the CLI.
+  </Step>
+  
+  <Step title="Configure git-cx">
+    ```bash
+    git config --global cx.provider claude
+    # Optional: specify model
+    git config --global cx.model claude-3-5-sonnet
+    ```
+  </Step>
+</Steps>
+
+### Configuration
+
+<CodeGroup>
+```bash Git Config
+git config --global cx.provider claude
+git config --global cx.model claude-3-5-sonnet
+git config --global cx.candidates 3
+```
+
+```gitconfig Config File
+[cx]
+  provider = claude
+  # model = claude-3-5-sonnet
+  candidates = 3
+  timeout = 30
+```
+</CodeGroup>
+
+### Available Models
+
+- `claude-3-5-sonnet` (recommended)
+- `claude-3-opus`
+- `claude-3-haiku`
+- Check Claude documentation for latest models
+
+### Technical Details
+
+<Accordion title="How it works">
+  git-cx executes:
+  
+  ```bash
+  claude -p "<prompt>" --model claude-3-5-sonnet
+  ```
+</Accordion>
+
+## Codex
+
+OpenAI Codex via the Codex CLI.
+
+### Installation
+
+<Steps>
+  <Step title="Install Codex CLI">
+    Install from [OpenAI Codex CLI repository](https://github.com/openai/codex):
+    
+    ```bash
+    # Follow repository instructions
+    ```
+  </Step>
+  
+  <Step title="Configure git-cx">
+    ```bash
+    git config --global cx.provider codex
+    # Optional: specify model
+    git config --global cx.model gpt-5
+    ```
+  </Step>
+</Steps>
+
+### Configuration
+
+<CodeGroup>
+```bash Git Config
+git config --global cx.provider codex
+git config --global cx.model gpt-5
+git config --global cx.candidates 3
+```
+
+```gitconfig Config File
+[cx]
+  provider = codex
+  # model = gpt-5
+  candidates = 3
+  timeout = 30
+```
+</CodeGroup>
+
+### Technical Details
+
+<Accordion title="How it works">
+  git-cx executes:
+  
+  ```bash
+  codex exec "<prompt>" --model gpt-5
+  ```
+  
+  Note: Uses `exec` as the prompt flag instead of `-p`.
+</Accordion>
+
+## API Provider (OpenAI-Compatible)
+
+Use any OpenAI-compatible API endpoint directly without a CLI wrapper.
+
+### Setup
+
+<Steps>
+  <Step title="Obtain API credentials">
+    Get an API key from your provider:
+    - [OpenAI](https://platform.openai.com/api-keys)
+    - [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
+    - Any OpenAI-compatible service (Ollama with API, LM Studio, etc.)
+  </Step>
+  
+  <Step title="Configure git-cx">
+    ```bash
+    git config --global cx.provider api
+    git config --global cx.model gpt-4o
+    git config --global cx.apiBaseUrl https://api.openai.com/v1
+    ```
+  </Step>
+  
+  <Step title="Set API key">
+    Export your API key as an environment variable:
+    
+    ```bash
+    export OPENAI_API_KEY=sk-...
+    ```
+    
+    Or add to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.):
+    ```bash ~/.zshrc
+    export OPENAI_API_KEY=sk-...
+    ```
+  </Step>
+</Steps>
+
+### Configuration
+
+<CodeGroup>
+```bash Git Config
+git config --global cx.provider api
+git config --global cx.model gpt-4o
+git config --global cx.apiBaseUrl https://api.openai.com/v1
+```
+
+```gitconfig Config File
+[cx]
+  provider = api
+  model = gpt-4o
+  apiBaseUrl = https://api.openai.com/v1
+  # OPENAI_API_KEY=... git cx
+```
+
+```bash CLI Usage
+OPENAI_API_KEY=sk-... git cx \
+  --provider api \
+  --model gpt-4o \
+  --api-base-url https://api.openai.com/v1
+```
+</CodeGroup>
+
+### OpenAI Models
+
+<Tabs>
+  <Tab title="Recommended">
+    - `gpt-4o` - Latest GPT-4 Optimized model (best quality)
+    - `gpt-4o-mini` - Faster, more cost-effective
+  </Tab>
+  <Tab title="Other">
+    - `gpt-4-turbo` - Previous generation GPT-4
+    - `gpt-3.5-turbo` - Faster, lower cost
+  </Tab>
+</Tabs>
+
+### Azure OpenAI
+
+For Azure OpenAI Service:
+
+```bash
+git config --global cx.provider api
+git config --global cx.model gpt-4o
+git config --global cx.apiBaseUrl https://<your-resource>.openai.azure.com/openai/deployments/<deployment-name>
+
+export OPENAI_API_KEY=<your-azure-api-key>
+```
+
+### Self-Hosted / Custom Endpoints
+
+<Accordion title="Ollama with OpenAI API">
+  If running Ollama with OpenAI-compatible API:
+  
+  ```bash
+  # Start Ollama with API server
+  ollama serve
+  
+  # Configure git-cx
+  git config --global cx.provider api
+  git config --global cx.model llama3
+  git config --global cx.apiBaseUrl http://localhost:11434/v1
+  
+  # No API key needed for local Ollama
+  git cx
+  ```
+</Accordion>
+
+<Accordion title="LM Studio">
+  For LM Studio local server:
+  
+  ```bash
+  git config --global cx.provider api
+  git config --global cx.model local-model
+  git config --global cx.apiBaseUrl http://localhost:1234/v1
+  ```
+</Accordion>
+
+### Technical Details
+
+<Accordion title="How it works">
+  git-cx makes HTTP POST requests to `<apiBaseUrl>/chat/completions` with:
+  
+  ```json
+  {
+    "model": "gpt-4o",
+    "messages": [
+      {"role": "user", "content": "<prompt>"}
+    ],
+    "n": 3
+  }
+  ```
+  
+  Request headers:
+  ```
+  Content-Type: application/json
+  Authorization: Bearer <OPENAI_API_KEY>
+  ```
+</Accordion>
+
+<Warning>
+  Never commit API keys to git config files or version control. Always use environment variables.
+</Warning>
+
+## Custom Provider
+
+Use any CLI tool that outputs text to stdout.
+
+### Setup
+
+The custom provider executes a shell command with `{prompt}` replaced by the actual prompt.
+
+<Steps>
+  <Step title="Choose your CLI tool">
+    Any command that:
+    - Accepts a prompt as input
+    - Outputs results to stdout
+    - Returns one result per line (for multiple candidates)
+  </Step>
+  
+  <Step title="Configure git-cx">
+    ```bash
+    git config --global cx.provider custom
+    git config --global cx.command "your-cli --prompt {prompt}"
+    ```
+    
+    The `{prompt}` placeholder is replaced with the actual prompt text.
+  </Step>
+</Steps>
+
+### Examples
+
+<CodeGroup>
+```bash Ollama
+git config --global cx.provider custom
+git config --global cx.command "ollama run llama3 --prompt {prompt}"
+git config --global cx.timeout 60
+```
+
+```bash curl + API
+git config --global cx.provider custom
+git config --global cx.command 'curl -s https://api.example.com/generate -d "{\"prompt\":\"{prompt}\"}" | jq -r .text'
+```
+
+```bash Python Script
+git config --global cx.provider custom
+git config --global cx.command "python3 ~/scripts/my-ai-wrapper.py '{prompt}'"
+```
+
+```bash Local LLM
+git config --global cx.provider custom
+git config --global cx.command "llamafile --prompt {prompt} --temp 0.7"
+```
+</CodeGroup>
+
+### Configuration
+
+<CodeGroup>
+```bash Git Config
+git config --global cx.provider custom
+git config --global cx.command "ollama run llama3 {prompt}"
+git config --global cx.candidates 3
+git config --global cx.timeout 60
+```
+
+```gitconfig Config File
+[cx]
+  provider = custom
+  command = ollama run llama3 {prompt}
+  candidates = 3
+  timeout = 60
+```
+</CodeGroup>
+
+### Output Format
+
+Your command should output:
+
+<Tabs>
+  <Tab title="Single candidate">
+    ```
+    feat: add user authentication
+    ```
+  </Tab>
+  <Tab title="Multiple candidates">
+    ```
+    feat: add user authentication
+    feat: implement login system
+    feat: add JWT-based auth
+    ```
+    
+    Each line becomes a separate candidate in the TUI.
+  </Tab>
+</Tabs>
+
+### Technical Details
+
+<Accordion title="How it works">
+  git-cx:
+  1. Replaces `{prompt}` in your command with the actual prompt
+  2. Executes the command via shell: `sh -c "<command>"`
+  3. Captures stdout
+  4. Splits output by newlines to extract candidates
+  5. Uses the first N lines as candidates (based on `cx.candidates`)
+</Accordion>
+
+<Accordion title="Command execution example">
+  If you configure:
+  ```bash
+  cx.command = "ollama run llama3 {prompt}"
+  ```
+  
+  git-cx executes:
+  ```bash
+  sh -c "ollama run llama3 'Generate a commit message for this diff: ...'"
+  ```
+</Accordion>
+
+## Provider Comparison
+
+| Provider | Pros | Cons | Best For |
+|----------|------|------|----------|
+| **gemini** | Fast, good quality, default | Requires Gemini CLI | General use |
+| **copilot** | GitHub integration, familiar | Requires subscription | GitHub users |
+| **claude** | High quality, context-aware | May require API key | Complex commits |
+| **codex** | OpenAI quality | Codex CLI needed | OpenAI fans |
+| **api** | No CLI needed, flexible | Requires API key, internet | Teams, custom endpoints |
+| **custom** | Maximum flexibility | Requires setup | Local models, custom tools |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Command not found: gemini/copilot/claude/codex">
+    **Cause:** CLI tool not installed or not in PATH.
+    
+    **Solution:**
+    1. Install the CLI tool (see provider-specific installation above)
+    2. Ensure it's in your PATH: `which gemini`
+    3. Restart your terminal
+  </Accordion>
+  
+  <Accordion title="API provider: authentication error">
+    **Cause:** Missing or invalid `OPENAI_API_KEY`.
+    
+    **Solution:**
+    ```bash
+    # Check if key is set
+    echo $OPENAI_API_KEY
+    
+    # Set the key
+    export OPENAI_API_KEY=sk-...
+    
+    # Or add to shell profile
+    echo 'export OPENAI_API_KEY=sk-...' >> ~/.zshrc
+    source ~/.zshrc
+    ```
+  </Accordion>
+  
+  <Accordion title="Custom provider: command failed">
+    **Cause:** Command syntax error or tool not working.
+    
+    **Solution:**
+    1. Test your command manually:
+       ```bash
+       # Replace {prompt} with test text
+       ollama run llama3 "test prompt"
+       ```
+    2. Check command output format (one line per candidate)
+    3. Increase timeout if the command is slow:
+       ```bash
+       git config cx.timeout 120
+       ```
+  </Accordion>
+  
+  <Accordion title="Timeout errors">
+    **Cause:** AI provider taking too long to respond.
+    
+    **Solution:**
+    ```bash
+    # Increase timeout (default: 30 seconds)
+    git config --global cx.timeout 60
+    
+    # Or per-invocation
+    git cx --timeout 90
+    ```
+  </Accordion>
+  
+  <Accordion title="Poor quality commit messages">
+    **Possible causes:**
+    - Model not suitable for code
+    - Too few or too many candidates
+    - Large, unfocused diffs
+    
+    **Solutions:**
+    1. Try a different model:
+       ```bash
+       git config cx.model gpt-4o
+       ```
+    2. Adjust candidates:
+       ```bash
+       git config cx.candidates 5
+       ```
+    3. Stage smaller, focused changes
+    4. Try the `auto` commit type (lets AI choose)
+  </Accordion>
+</AccordionGroup>
+
+## Provider-Specific Tips
+
+<Accordion title="Gemini: Rate limiting">
+  If you hit rate limits, add delays between commits or use a paid tier with higher quotas.
+</Accordion>
+
+<Accordion title="Copilot: Model availability">
+  GitHub Copilot may update available models. Omit the `cx.model` setting to always use the latest default.
+</Accordion>
+
+<Accordion title="API: Cost optimization">
+  To reduce API costs:
+  - Use smaller models like `gpt-4o-mini` or `gpt-3.5-turbo`
+  - Reduce `cx.candidates` to 1-2
+  - Stage smaller diffs
+</Accordion>
+
+<Accordion title="Custom: Local model performance">
+  For better performance with local models:
+  - Use smaller, faster models (e.g., Llama 3 8B instead of 70B)
+  - Increase timeout for larger models
+  - Consider using GPU acceleration (CUDA, Metal)
+</Accordion>
+
+## Next Steps
+
+- [Configure git-cx](/guides/configuration) with your chosen provider
+- [Learn the TUI workflow](/guides/using-git-cx)
+- Experiment with different models and settings to find what works best for your project

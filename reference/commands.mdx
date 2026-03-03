@@ -1,0 +1,224 @@
+---
+title: "Command Reference"
+description: "Complete reference for all git-cx commands and flags"
+---
+
+## Main Command
+
+The main command generates AI-powered Conventional Commits messages from your staged changes.
+
+```bash
+git cx [flags]
+```
+
+### Description
+
+`git-cx` generates Conventional Commits messages using an AI provider and presents them in an interactive TUI. It analyzes your staged changes and generates commit message candidates based on the diff.
+
+### Global Flags
+
+All flags can be used with the main command to override configuration values.
+
+<ParamField path="--config" type="string">
+  Path to a gitconfig-format config file. Use this to load configuration from a specific file instead of global git config.
+  
+  Example: `git cx --config ~/.config/git-cx/config`
+</ParamField>
+
+<ParamField path="--provider" type="string">
+  AI provider to use for generating commit messages. 
+  
+  Valid values: `gemini`, `copilot`, `claude`, `codex`, `api`, `custom`
+  
+  Default: `gemini`
+</ParamField>
+
+<ParamField path="--model" type="string">
+  Model name to pass to the provider. Required for the `api` provider.
+  
+  Example: `--model gpt-4` or `--model gemini-2.5-flash`
+</ParamField>
+
+<ParamField path="--candidates" type="integer">
+  Number of commit message candidates to generate.
+  
+  Default: `3`
+  
+  Must be greater than 0.
+</ParamField>
+
+<ParamField path="--timeout" type="integer">
+  Request timeout in seconds for AI provider requests.
+  
+  Default: `30`
+  
+  Must be greater than 0.
+</ParamField>
+
+<ParamField path="--command" type="string">
+  Command template for the `custom` provider. Use `{prompt}` as a placeholder for the prompt text.
+  
+  Required when using `--provider custom`.
+  
+  Example: `--command "mycli --prompt {prompt}"`
+</ParamField>
+
+<ParamField path="--api-base-url" type="string">
+  Base URL for the `api` provider. Must include scheme and host.
+  
+  Required when using `--provider api`.
+  
+  Default: `https://api.openai.com/v1`
+  
+  Example: `--api-base-url https://api.openai.com/v1`
+</ParamField>
+
+<ParamField path="--use-emoji" type="boolean">
+  Prefix the commit type with an emoji.
+  
+  Default: `false`
+  
+  Example: `--use-emoji` will generate commits like "✨ feat: add new feature"
+</ParamField>
+
+<ParamField path="--max-subject-length" type="integer">
+  Maximum length of the commit subject line in characters.
+  
+  Default: `100`
+  
+  Must be >= 0. Set to 0 to disable length checking.
+</ParamField>
+
+<ParamField path="--dry-run" type="boolean">
+  Preview commit messages without actually committing. Useful for testing or reviewing AI-generated messages.
+  
+  Default: `false`
+  
+  When enabled, if there are no staged changes, git-cx will use unstaged changes or the last commit for preview.
+</ParamField>
+
+### Examples
+
+```bash
+# Basic usage with staged changes
+git add -A
+git cx
+
+# Use a specific provider and model
+git cx --provider api --model gpt-4
+
+# Generate more candidates with custom timeout
+git cx --candidates 5 --timeout 60
+
+# Use emoji prefixes
+git cx --use-emoji
+
+# Preview without committing
+git cx --dry-run
+
+# Load configuration from a file
+git cx --config examples/gemini.gitconfig
+```
+
+---
+
+## config
+
+Display the current git-cx configuration loaded from git config.
+
+```bash
+git cx config [flags]
+```
+
+### Description
+
+Shows the current configuration values that git-cx is using. Values are read from:
+1. Default values
+2. Global git config (`~/.gitconfig`)
+3. Local git config (`.git/config`)
+4. Config file (if `--config` flag is used)
+5. Command-line flags (highest priority)
+
+The command displays all configuration values including the provider, model, candidates, timeout, API settings, and commit formatting options.
+
+### Examples
+
+```bash
+# Show current configuration
+git cx config
+
+# Show configuration with specific config file
+git cx config --config examples/gemini.gitconfig
+
+# Show configuration with flag overrides
+git cx config --provider api --model gpt-4
+```
+
+### Output Format
+
+The output displays all configuration keys and their current values:
+
+```
+provider:                  gemini
+model:                     gemini-3.0-flash
+candidates:                3
+timeout:                   30
+apiBaseUrl:                https://api.openai.com/v1
+apiKey (OPENAI_API_KEY):   <set>
+commit.useEmoji:           false
+commit.maxSubjectLength:   100
+commit.scopes:             [api ui core]
+```
+
+<Note>
+The API key value is never displayed directly. It shows `<set>` if the `OPENAI_API_KEY` environment variable is present, or `<not set>` otherwise.
+</Note>
+
+### Setting Configuration
+
+To set configuration values, use standard git config commands:
+
+```bash
+# Set provider globally
+git config --global cx.provider gemini
+
+# Set model for current repository
+git config cx.model gemini-2.5-flash
+
+# Set number of candidates
+git config --global cx.candidates 5
+
+# Set API base URL
+git config --global cx.apiBaseUrl https://api.openai.com/v1
+```
+
+---
+
+## version
+
+Print the current version of git-cx.
+
+```bash
+git cx version
+```
+
+### Description
+
+Displays the installed version of git-cx. Useful for troubleshooting and ensuring you're using the latest version.
+
+### Example Output
+
+```
+git-cx 1.2.3
+```
+
+### Examples
+
+```bash
+# Check installed version
+git cx version
+
+# Use in scripts
+VERSION=$(git cx version | cut -d' ' -f2)
+echo "Running git-cx $VERSION"
+```

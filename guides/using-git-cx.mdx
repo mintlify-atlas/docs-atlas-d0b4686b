@@ -1,0 +1,337 @@
+---
+title: Using git-cx
+description: Complete workflow guide for generating AI-powered Conventional Commits with the git-cx TUI
+---
+
+## Overview
+
+git-cx is an interactive TUI (Terminal User Interface) that guides you through creating Conventional Commits messages with AI assistance. After staging your changes, git-cx analyzes the diff and generates commit message candidates for you to choose from.
+
+## Basic Workflow
+
+<Steps>
+  <Step title="Stage your changes">
+    First, stage the changes you want to commit:
+    
+    ```bash
+    git add <files>
+    # or stage all changes
+    git add -A
+    ```
+    
+    <Note>
+      git-cx requires staged changes to generate commit messages. If no changes are staged, you'll see an error: "no staged changes. Run 'git add' first."
+    </Note>
+  </Step>
+  
+  <Step title="Launch git-cx">
+    Run the command:
+    
+    ```bash
+    git cx
+    ```
+    
+    The TUI will launch in full-screen mode and guide you through the commit process.
+  </Step>
+  
+  <Step title="Select commit type">
+    The first screen presents the Conventional Commits types:
+    
+    <Accordion title="Available commit types">
+      | Type | Description |
+      |------|-------------|
+      | **auto** | AI selects type and header |
+      | **feat** | A new feature |
+      | **fix** | A bug fix |
+      | **docs** | Documentation only changes |
+      | **style** | Changes that do not affect the meaning of the code |
+      | **refactor** | A code change that neither fixes a bug nor adds a feature |
+      | **perf** | A code change that improves performance |
+      | **test** | Adding missing tests or correcting existing tests |
+      | **build** | Changes that affect the build system or external dependencies |
+      | **ci** | Changes to CI configuration files and scripts |
+      | **chore** | Other changes that don't modify src or test files |
+      | **revert** | Reverts a previous commit |
+    </Accordion>
+    
+    **Navigation:**
+    - `↑` `↓` - Move between types
+    - `Enter` - Confirm selection
+    - `Ctrl+C` - Quit
+  </Step>
+  
+  <Step title="Enter scope (optional)">
+    After selecting a type, you can specify a scope (e.g., `api`, `ui`, `auth`):
+    
+    ```
+    Enter scope
+    
+    (optional) scope, press Enter to skip
+    
+    Enter to confirm • Ctrl+C to quit
+    ```
+    
+    - Type the scope name, or leave blank to skip
+    - Press `Enter` to continue
+    
+    <Note>
+      The scope appears in parentheses in the final commit: `feat(api): add user endpoint`
+    </Note>
+  </Step>
+  
+  <Step title="AI generates commit messages">
+    git-cx sends your staged diff to the configured AI provider and displays a loading spinner:
+    
+    ```
+    ⠋ Generating commit messages...
+    
+    Ctrl+C to quit
+    ```
+    
+    The AI generates multiple candidate messages based on the diff content.
+  </Step>
+  
+  <Step title="Select a commit message">
+    Once generation completes, you'll see a list of AI-generated candidates:
+    
+    ```
+    Select commit message
+    
+    • feat(api): add user authentication endpoint
+    • feat(api): implement JWT-based user login
+    • feat(api): add secure user authentication
+    • [Manual entry] - Enter a commit message manually
+    • [Regenerate] - Regenerate with AI
+    
+    Enter to select • Ctrl+C to quit
+    ```
+    
+    **Options:**
+    - `↑` `↓` - Navigate candidates
+    - `Enter` - Select a candidate
+    - Select **[Manual entry]** to write your own message
+    - Select **[Regenerate]** to generate new candidates
+    
+    <Warning>
+      If AI generation fails (e.g., provider not installed, timeout), you'll see an error message and be prompted to enter a message manually. Press `Ctrl+R` to retry AI generation.
+    </Warning>
+  </Step>
+  
+  <Step title="Choose detail input method">
+    After selecting a subject line, choose how to add body and footer:
+    
+    ```
+    Select detail input
+    
+    • [Skip] - Skip body and footer
+    • [Generate with AI] - Generate body/footer with AI
+    • [Manual entry] - Enter body/footer manually
+    
+    Ctrl+R to retry AI • Ctrl+C to quit
+    ```
+    
+    <Tabs>
+      <Tab title="Skip">
+        Creates a commit with only the subject line (most common choice).
+      </Tab>
+      <Tab title="Generate with AI">
+        The AI analyzes the diff again and generates a detailed commit body and optional footer. After generation, you can edit the body before confirming.
+      </Tab>
+      <Tab title="Manual entry">
+        Opens text input fields where you can manually type the body and footer.
+      </Tab>
+    </Tabs>
+  </Step>
+  
+  <Step title="Edit body (if applicable)">
+    If you chose AI generation or manual entry, you'll see a body text editor:
+    
+    ```
+    Enter commit body (optional)
+    
+    [Multi-line text area]
+    
+    Esc to skip • Tab to confirm • Ctrl+C to quit
+    ```
+    
+    - Type or edit the commit body
+    - `Tab` - Save and continue to footer
+    - `Esc` - Skip body (leave empty)
+  </Step>
+  
+  <Step title="Enter footer (if applicable)">
+    Add an optional footer (e.g., `Closes #123`, `BREAKING CHANGE: ...`):
+    
+    ```
+    Enter commit footer (optional)
+    
+    (optional) footer, press Enter to skip
+    
+    Enter to confirm (empty to skip) • Ctrl+C to quit
+    ```
+    
+    - Type the footer text, or press `Enter` to skip
+  </Step>
+  
+  <Step title="Confirm commit">
+    Review the final commit message:
+    
+    ```
+    Confirm commit message
+    
+    feat(api): add user authentication endpoint
+    
+    Implements JWT-based authentication for user login.
+    Adds middleware for token validation.
+    
+    Closes #42
+    
+    y/Enter to commit • n to abort • Esc to edit footer • Ctrl+C to quit
+    ```
+    
+    **Actions:**
+    - `y` or `Enter` - Commit the changes
+    - `n` - Abort without committing
+    - `Esc` - Go back to edit the footer
+    - `Ctrl+C` - Quit
+  </Step>
+  
+  <Step title="Success">
+    If the commit succeeds, you'll see:
+    
+    ```
+    Committed successfully!
+    ```
+    
+    The TUI exits and returns you to the command line.
+  </Step>
+</Steps>
+
+## Dry Run Mode
+
+Preview commit messages without actually committing:
+
+```bash
+git cx --dry-run
+```
+
+In dry-run mode:
+- You can still use the full TUI workflow
+- The final confirmation shows `[DRY RUN]` in the prompt
+- When you confirm, the commit message is displayed but not committed
+- Useful for testing AI providers or configuration
+
+<Note>
+  If no changes are staged in dry-run mode, git-cx will use unstaged changes or the last commit's diff for preview purposes.
+</Note>
+
+## Keyboard Reference
+
+### Select Type / Message Screens
+
+| Key | Action |
+|-----|--------|
+| `↑` `↓` | Navigate options |
+| `Enter` | Confirm selection |
+| `Ctrl+C` | Quit |
+
+### Input Scope / Footer Screens
+
+| Key | Action |
+|-----|--------|
+| Type text | Enter content |
+| `Enter` | Confirm and continue |
+| `Ctrl+C` | Quit |
+
+### Input Body Screen
+
+| Key | Action |
+|-----|--------|
+| Type text | Enter multi-line body |
+| `Tab` | Confirm body and continue |
+| `Esc` | Skip body (leave empty) |
+| `Ctrl+C` | Quit |
+
+### Manual Message Entry Screen
+
+| Key | Action |
+|-----|--------|
+| Type text | Enter commit message |
+| `Enter` | Confirm message |
+| `Ctrl+R` | Retry AI generation |
+| `Ctrl+C` | Quit |
+
+### Confirm Screen
+
+| Key | Action |
+|-----|--------|
+| `y` or `Enter` | Commit changes |
+| `n` | Abort without committing |
+| `Esc` | Go back to edit footer |
+| `Ctrl+C` | Quit |
+
+## Tips and Best Practices
+
+<AccordionGroup>
+  <Accordion title="Stage related changes together">
+    For best AI results, stage logically related changes together. Avoid mixing unrelated changes (e.g., bug fixes and new features) in one commit.
+  </Accordion>
+  
+  <Accordion title="Use 'auto' type for complex commits">
+    The `auto` type lets the AI determine both the commit type and subject. This is useful when the staged changes span multiple categories.
+  </Accordion>
+  
+  <Accordion title="Edit AI suggestions">
+    AI-generated messages are starting points. Select **[Manual entry]** or edit the body to add project-specific context the AI might miss.
+  </Accordion>
+  
+  <Accordion title="Configure scopes for consistency">
+    Define common scopes in your configuration to maintain consistency across your team's commits. See the [Configuration guide](/guides/configuration) for details.
+  </Accordion>
+  
+  <Accordion title="Regenerate for better options">
+    If none of the AI candidates are suitable, select **[Regenerate]** to get a fresh set of suggestions. Each generation may produce different results.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<Accordion title="Error: no staged changes">
+  **Cause:** You haven't staged any changes with `git add`.
+  
+  **Solution:** Stage your changes before running git-cx:
+  ```bash
+  git add <files>
+  git cx
+  ```
+</Accordion>
+
+<Accordion title="AI error: provider command not found">
+  **Cause:** The configured AI provider CLI is not installed or not in your PATH.
+  
+  **Solution:** Install the required CLI tool for your provider. See the [AI Providers guide](/guides/ai-providers) for installation instructions.
+</Accordion>
+
+<Accordion title="AI generation timeout">
+  **Cause:** The AI provider took longer than the configured timeout.
+  
+  **Solution:** Increase the timeout in your configuration:
+  ```bash
+  git config --global cx.timeout 60
+  ```
+</Accordion>
+
+<Accordion title="TUI display issues">
+  **Cause:** Terminal incompatibility or small terminal size.
+  
+  **Solution:** 
+  - Resize your terminal window to be larger
+  - Use a modern terminal emulator (iTerm2, Windows Terminal, etc.)
+  - Check that your terminal supports ANSI escape codes
+</Accordion>
+
+## Next Steps
+
+- [Configure git-cx](/guides/configuration) for your workflow
+- [Set up AI providers](/guides/ai-providers) for your preferred service
+- Learn about [Conventional Commits](https://www.conventionalcommits.org/) specification

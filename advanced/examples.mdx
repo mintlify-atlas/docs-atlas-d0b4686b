@@ -1,0 +1,629 @@
+---
+title: 'Examples & Use Cases'
+description: 'Real-world configuration examples and common use cases for git-cx'
+---
+
+## Provider Configurations
+
+These examples are included in the git-cx repository at `examples/*.gitconfig`. You can use them directly with the `--config` flag or copy their settings to your global git config.
+
+### Gemini (Google)
+
+Google's Gemini models via the [Gemini CLI](https://github.com/google-gemini/gemini-cli).
+
+<CodeGroup>
+```gitconfig examples/gemini.gitconfig
+[cx]
+  provider = gemini
+  model = gemini-2.0-flash
+  candidates = 3
+  timeout = 30
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+  # scopes = feat
+  # scopes = fix
+  # scopes = docs
+```
+
+```bash Quick Start
+# Install Gemini CLI
+npm install -g @google/generative-ai-cli
+
+# Use this config
+git cx --config examples/gemini.gitconfig
+
+# Or set globally
+git config --global cx.provider gemini
+git config --global cx.model gemini-2.0-flash
+```
+</CodeGroup>
+
+<Tip>
+Gemini Flash models are fast and cost-effective for commit message generation. Use `gemini-2.0-flash` for the latest version.
+</Tip>
+
+### GitHub Copilot
+
+GitHub Copilot via the [Copilot CLI](https://github.com/github/copilot-cli).
+
+<CodeGroup>
+```gitconfig examples/copilot.gitconfig
+[cx]
+  provider = copilot
+  # model = gpt-4o   # omit to use GitHub Copilot's default model
+  candidates = 3
+  timeout = 30
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+  # scopes = feat
+  # scopes = fix
+  # scopes = docs
+```
+
+```bash Quick Start
+# Install Copilot CLI (requires GitHub Copilot subscription)
+gh extension install github/gh-copilot
+
+# Use this config
+git cx --config examples/copilot.gitconfig
+
+# Or set globally
+git config --global cx.provider copilot
+```
+</CodeGroup>
+
+<Note>
+The `model` field is optional for Copilot. Omit it to use GitHub's default model selection. If specified, use models like `gpt-4o` or `gpt-4-turbo`.
+</Note>
+
+### Claude (Anthropic)
+
+Anthropic's Claude models via [Claude Code](https://github.com/anthropics/claude-code).
+
+<CodeGroup>
+```gitconfig examples/claude.gitconfig
+[cx]
+  provider = claude
+  # model = claude-3-5-sonnet
+  candidates = 3
+  timeout = 30
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+  # scopes = feat
+  # scopes = fix
+  # scopes = docs
+```
+
+```bash Quick Start
+# Install Claude CLI
+npm install -g @anthropic-ai/claude-cli
+
+# Use this config
+git cx --config examples/claude.gitconfig
+
+# Or set globally
+git config --global cx.provider claude
+git config --global cx.model claude-3-5-sonnet
+```
+</CodeGroup>
+
+### OpenAI Codex
+
+OpenAI's Codex models via the [Codex CLI](https://github.com/openai/codex).
+
+<CodeGroup>
+```gitconfig examples/codex.gitconfig
+[cx]
+  provider = codex
+  # model = gpt-5
+  candidates = 3
+  timeout = 30
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+  # scopes = feat
+  # scopes = fix
+  # scopes = docs
+```
+
+```bash Quick Start
+# Install Codex CLI
+pip install openai-codex-cli
+
+# Use this config
+git cx --config examples/codex.gitconfig
+
+# Or set globally
+git config --global cx.provider codex
+git config --global cx.model gpt-5
+```
+</CodeGroup>
+
+### OpenAI-Compatible API
+
+Direct API integration with OpenAI or compatible endpoints (OpenRouter, Azure OpenAI, local LLMs, etc.).
+
+<CodeGroup>
+```gitconfig examples/api.gitconfig
+[cx]
+  provider = api
+  model = gpt-5
+  apiBaseUrl = https://api.openai.com/v1
+  # OPENAI_API_KEY=... git cx
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+  # scopes = feat
+  # scopes = fix
+  # scopes = docs
+```
+
+```bash Quick Start
+# Set your API key
+export OPENAI_API_KEY="sk-..."
+
+# Use this config
+git cx --config examples/api.gitconfig
+
+# Or set globally
+git config --global cx.provider api
+git config --global cx.model gpt-4o
+git config --global cx.apiBaseUrl https://api.openai.com/v1
+```
+</CodeGroup>
+
+<Warning>
+The API provider requires `OPENAI_API_KEY` environment variable. Never commit API keys to git config files.
+</Warning>
+
+## Team Configurations
+
+### Shared Team Config
+
+Create a `.git-cx.config` file in your repository root:
+
+```gitconfig .git-cx.config
+[cx]
+  provider = api
+  model = gpt-4o-mini
+  apiBaseUrl = https://api.openai.com/v1
+  candidates = 5
+  timeout = 30
+
+[cx "commit"]
+  useEmoji = true
+  maxSubjectLength = 72
+  # Project-specific scopes
+  scopes = api
+  scopes = ui
+  scopes = db
+  scopes = auth
+  scopes = config
+  scopes = tests
+```
+
+Add to `.gitignore`:
+
+```gitignore
+.git-cx.config
+```
+
+Team members use it:
+
+```bash
+git cx --config .git-cx.config
+```
+
+Or create an alias:
+
+```bash
+git config --global alias.cxt '!git cx --config .git-cx.config'
+git cxt
+```
+
+### Per-Repository Config
+
+Set repository-specific config (no `--global`):
+
+```bash
+cd ~/projects/my-app
+git config cx.provider gemini
+git config cx.model gemini-2.0-flash
+git config cx.commit.scopes frontend
+git config cx.commit.scopes backend
+git config cx.commit.scopes shared
+```
+
+Now `git cx` in this repo uses these settings automatically.
+
+## Common Use Cases
+
+### Use Case 1: Monorepo with Multiple Scopes
+
+**Scenario:** Large monorepo with many services/packages that require specific scopes.
+
+```gitconfig
+[cx]
+  provider = copilot
+  candidates = 5
+
+[cx "commit"]
+  maxSubjectLength = 100
+  # Package scopes
+  scopes = packages/auth
+  scopes = packages/api
+  scopes = packages/ui
+  scopes = packages/shared
+  # Service scopes
+  scopes = services/user
+  scopes = services/billing
+  scopes = services/notifications
+  # Infrastructure
+  scopes = infra
+  scopes = ci
+  scopes = docs
+```
+
+**Workflow:**
+1. Stage changes: `git add packages/auth/`
+2. Run git-cx: `git cx`
+3. Select type: `feat`
+4. Select scope from pre-defined list: `packages/auth`
+5. Review suggestions tailored to auth package
+
+### Use Case 2: Emoji Commits for Open Source
+
+**Scenario:** Open source project using gitmoji convention.
+
+```gitconfig
+[cx]
+  provider = gemini
+  model = gemini-2.0-flash
+  candidates = 4
+
+[cx "commit"]
+  useEmoji = true
+  maxSubjectLength = 72
+```
+
+**Example output:**
+```
+✨ feat: add user authentication
+🐛 fix: resolve login timeout issue
+📝 docs: update API documentation
+♻️ refactor: simplify auth logic
+```
+
+### Use Case 3: Strict Subject Length for Linear
+
+**Scenario:** Team using Linear with strict 50-character subject limit.
+
+```gitconfig
+[cx]
+  provider = api
+  model = gpt-4o-mini
+  apiBaseUrl = https://api.openai.com/v1
+  candidates = 3
+
+[cx "commit"]
+  maxSubjectLength = 50
+```
+
+git-cx will truncate suggestions to 50 characters maximum.
+
+### Use Case 4: Offline Development with Local LLM
+
+**Scenario:** Developer working offline with Ollama.
+
+```gitconfig
+[cx]
+  provider = custom
+  command = ollama run codellama {prompt}
+  candidates = 3
+  timeout = 60
+
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+```
+
+**Setup:**
+```bash
+# Install Ollama
+brew install ollama
+
+# Pull a coding model
+ollama pull codellama
+
+# Use git-cx offline
+git cx
+```
+
+### Use Case 5: Multi-Environment Setup
+
+**Scenario:** Different providers for work vs personal projects.
+
+**Work config** (`~/work/.gitconfig-work`):
+```gitconfig
+[cx]
+  provider = api
+  model = gpt-4o
+  apiBaseUrl = https://work-api.company.com/v1
+  # Uses company API key
+```
+
+**Personal config** (global):
+```gitconfig
+[cx]
+  provider = gemini
+  model = gemini-2.0-flash
+```
+
+**Usage:**
+```bash
+# At work
+cd ~/work/project
+git cx --config ~/work/.gitconfig-work
+
+# Personal projects
+cd ~/personal/project
+git cx  # Uses global config
+```
+
+### Use Case 6: CI/CD Integration
+
+**Scenario:** Auto-generate commit messages in CI pipelines.
+
+```bash ci-script.sh
+#!/bin/bash
+# ci-commit.sh - Generate and commit with git-cx in CI
+
+set -e
+
+# Stage all changes
+git add -A
+
+# Check if there are changes
+if git diff --cached --quiet; then
+    echo "No changes to commit"
+    exit 0
+fi
+
+# Generate commit with git-cx (non-interactive)
+export OPENAI_API_KEY="${CI_OPENAI_API_KEY}"
+
+# Use --dry-run to get suggestions, then auto-select first
+git cx \
+  --provider api \
+  --model gpt-4o-mini \
+  --api-base-url https://api.openai.com/v1 \
+  --candidates 1
+
+# In practice, you'd need to parse output and commit
+# This is a simplified example
+```
+
+<Warning>
+git-cx is designed for interactive use. For CI/CD, consider using the API provider programmatically or creating a wrapper script.
+</Warning>
+
+### Use Case 7: Custom Scope Validation
+
+**Scenario:** Enforce scopes match JIRA ticket format.
+
+Create a wrapper script:
+
+```bash git-cx-jira
+#!/bin/bash
+# git-cx-jira - Validates scope is a JIRA ticket
+
+# Run git-cx with pre-defined scopes from current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Extract JIRA ticket from branch name (e.g., feature/PROJ-123-description)
+TICKET=$(echo "$BRANCH" | grep -oE '[A-Z]+-[0-9]+')
+
+if [ -n "$TICKET" ]; then
+    # Auto-fill scope with JIRA ticket
+    git cx --config - <<EOF
+[cx]
+  provider = gemini
+[cx "commit"]
+  scopes = $TICKET
+EOF
+else
+    echo "Warning: No JIRA ticket found in branch name"
+    git cx
+fi
+```
+
+### Use Case 8: Template-Based Commits
+
+**Scenario:** Project requires specific commit body format.
+
+```gitconfig
+[cx]
+  provider = copilot
+  candidates = 3
+
+[cx "commit"]
+  maxSubjectLength = 72
+  # Define required scopes
+  scopes = frontend
+  scopes = backend
+  scopes = database
+  scopes = deployment
+```
+
+Combine with git commit template:
+
+```bash
+git config --global commit.template ~/.gitmessage
+```
+
+`~/.gitmessage`:
+```
+# <type>(<scope>): <subject>
+
+# Body (explain what and why, not how)
+
+
+# Footer (reference issues, breaking changes)
+# BREAKING CHANGE: 
+# Closes: #
+```
+
+## Advanced Configurations
+
+### Multi-Model Strategy
+
+Use different models for different types of commits:
+
+```bash
+# For large features (detailed body/footer)
+alias gcx-detailed='git cx --provider api --model gpt-4o --candidates 3'
+
+# For quick fixes (fast, cheap)
+alias gcx-quick='git cx --provider api --model gpt-4o-mini --candidates 5'
+
+# For refactoring (context-aware)
+alias gcx-refactor='git cx --provider claude --model claude-3-5-sonnet'
+```
+
+### Context-Aware Scopes
+
+Auto-populate scopes based on changed files:
+
+```bash git-cx-smart
+#!/bin/bash
+# git-cx-smart - Auto-detect scopes from changed files
+
+# Get changed directories
+DIRS=$(git diff --cached --name-only | cut -d'/' -f1 | sort -u)
+
+# Convert to scope config
+SCOPES=$(echo "$DIRS" | sed 's/^/scopes = /')
+
+# Generate config on-the-fly
+git cx --config - <<EOF
+[cx]
+  provider = gemini
+[cx "commit"]
+  $SCOPES
+EOF
+```
+
+### Rate Limiting Protection
+
+Prevent excessive API calls:
+
+```bash git-cx-throttled
+#!/bin/bash
+# git-cx-throttled - Rate-limited git-cx
+
+LOCKFILE="/tmp/git-cx.lock"
+COOLDOWN=10  # seconds
+
+if [ -f "$LOCKFILE" ]; then
+    AGE=$(($(date +%s) - $(stat -f %m "$LOCKFILE")))
+    if [ $AGE -lt $COOLDOWN ]; then
+        echo "Please wait $((COOLDOWN - AGE)) seconds before next commit"
+        exit 1
+    fi
+fi
+
+touch "$LOCKFILE"
+git cx "$@"
+```
+
+## Configuration Debugging
+
+### View Current Configuration
+
+```bash
+git cx config
+```
+
+Output:
+```
+provider:                  gemini
+model:                     gemini-2.0-flash
+candidates:                3
+timeout:                   30
+commit.useEmoji:           false
+commit.maxSubjectLength:   100
+```
+
+### Test Configuration
+
+```bash
+# Test without committing
+git cx --dry-run
+
+# Test with specific config
+git cx --dry-run --config examples/gemini.gitconfig
+
+# Test with overrides
+git cx --dry-run --provider custom --command "echo 'test: commit message'"
+```
+
+### Validate gitconfig File
+
+```bash
+git config --file examples/gemini.gitconfig --list
+```
+
+## Tips & Best Practices
+
+<AccordionGroup>
+  <Accordion title="Start with Conservative Timeouts">
+    Begin with `timeout = 30` and increase only if needed. Shorter timeouts keep the workflow responsive.
+  </Accordion>
+
+  <Accordion title="Use Fewer Candidates for Faster Results">
+    More candidates mean more API calls and longer wait times. Start with `candidates = 3`.
+  </Accordion>
+
+  <Accordion title="Enable Emojis Consistently">
+    If using emojis, ensure all team members have `useEmoji = true`. Mixed styles create inconsistent history.
+  </Accordion>
+
+  <Accordion title="Define Scopes Early">
+    Pre-defined scopes improve AI suggestions and reduce typing. Update them as your project evolves.
+  </Accordion>
+
+  <Accordion title="Use Config Files for Team Alignment">
+    Commit a `.git-cx.config` (or similar) to your repo for consistent team behavior.
+  </Accordion>
+
+  <Accordion title="Combine with Pre-commit Hooks">
+    Validate generated commits with tools like `commitlint`:
+    ```bash
+    # .git/hooks/commit-msg
+    npx commitlint --edit $1
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting Examples
+
+See [Troubleshooting](/advanced/troubleshooting) for detailed error resolution.
+
+**Quick fixes:**
+
+```bash
+# Provider not found
+git config --global cx.provider gemini
+
+# Command not set for custom provider
+git config --global cx.command "ollama run codellama {prompt}"
+
+# API key missing
+export OPENAI_API_KEY="sk-..."
+
+# Timeout too short
+git config --global cx.timeout 60
+```

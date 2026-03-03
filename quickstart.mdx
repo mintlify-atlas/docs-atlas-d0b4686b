@@ -1,80 +1,358 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Make your first AI-generated commit in 5 minutes
 ---
 
-## Get started in three steps
-
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+This guide will walk you through making your first commit with git-cx.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  Make sure you've [installed git-cx](/installation) and configured an AI provider before continuing.
 </Note>
+
+## Your First Commit
+
+<Steps>
+  <Step title="Navigate to a git repository">
+    Open a terminal and navigate to any git repository:
+    
+    ```bash
+    cd ~/my-project
+    ```
+    
+    <Tip>
+      If you don't have a project handy, create a test repository:
+      
+      ```bash
+      mkdir git-cx-test && cd git-cx-test
+      git init
+      echo "# Test Project" > README.md
+      ```
+    </Tip>
+  </Step>
+  
+  <Step title="Make some changes">
+    Edit a file or create a new one:
+    
+    ```bash
+    echo "console.log('Hello, git-cx!');" > hello.js
+    ```
+  </Step>
+  
+  <Step title="Stage your changes">
+    Use `git add` to stage the files you want to commit:
+    
+    ```bash
+    git add hello.js
+    ```
+    
+    <Warning>
+      git-cx only works with **staged** changes. Make sure to run `git add` first!
+    </Warning>
+  </Step>
+  
+  <Step title="Run git-cx">
+    Execute git-cx to generate commit messages:
+    
+    ```bash
+    git cx
+    ```
+    
+    The tool will:
+    1. Analyze your staged diff
+    2. Send it to your configured AI provider
+    3. Generate multiple commit message candidates
+    4. Launch the interactive TUI
+  </Step>
+  
+  <Step title="Select commit type">
+    The TUI will first ask you to select a commit type:
+    
+    - Use `↑` and `↓` arrow keys to navigate
+    - Press `Enter` to select
+    
+    For a new file, you might choose:
+    - **feat** - If it's a new feature
+    - **chore** - If it's just setup/maintenance
+    - **auto** - Let the AI decide
+    
+    <Tip>
+      Select **auto** to let the AI choose the most appropriate type and generate the complete message.
+    </Tip>
+  </Step>
+  
+  <Step title="Choose a message">
+    git-cx will display multiple AI-generated commit messages:
+    
+    - Use `↑` and `↓` to browse candidates
+    - Press `Enter` to select your preferred message
+    
+    Example candidates might look like:
+    - `add initial hello world script`
+    - `create hello.js with console log greeting`
+    - `implement basic hello world example`
+  </Step>
+  
+  <Step title="Add scope (optional)">
+    You'll be prompted to enter an optional scope:
+    
+    - Type a scope like `core`, `api`, `ui`, etc.
+    - Press `Enter` to skip (leave empty)
+    
+    Scopes help categorize commits within a type. For example:
+    - `feat(api): add user endpoint`
+    - `fix(ui): resolve button alignment`
+  </Step>
+  
+  <Step title="Add body (optional)">
+    Optionally add a detailed commit body:
+    
+    - Type additional context or explanation
+    - Press `Enter` on an empty line to skip
+    - Press `Ctrl+D` when done (if adding multiple lines)
+    
+    The body is useful for explaining the "why" behind changes.
+  </Step>
+  
+  <Step title="Add footer (optional)">
+    Optionally add a footer (like breaking change notices or issue references):
+    
+    - Type footer content (e.g., `Closes #123`)
+    - Press `Enter` to skip
+    
+    Common footer patterns:
+    - `BREAKING CHANGE: description of breaking change`
+    - `Closes #123`
+    - `Refs #456`
+  </Step>
+  
+  <Step title="Confirm and commit">
+    Review the complete commit message and confirm:
+    
+    - Press `y` to commit
+    - Press `n` or `q` to abort
+    
+    git-cx will execute `git commit` with your message!
+  </Step>
+</Steps>
+
+## Example Workflow
+
+Here's a complete example session:
+
+```bash
+# Make changes
+echo "function greet(name) { return \`Hello, \${name}\`; }" > greet.js
+
+# Stage changes
+git add greet.js
+
+# Run git-cx
+git cx
+```
+
+**TUI Interaction:**
+
+1. **Select Type Screen:**
+   ```
+   Select commit type:
+   > auto
+     feat
+     fix
+     docs
+   ```
+   Select `feat` and press `Enter`
+
+2. **Select Message Screen:**
+   ```
+   Select commit message:
+   > add greet function for name-based greetings
+     implement greet function with template literals
+     create greeting function with personalization
+   ```
+   Select the first one and press `Enter`
+
+3. **Scope Input:**
+   ```
+   Enter scope (optional):
+   core█
+   ```
+   Type `core` and press `Enter`
+
+4. **Body Input:**
+   ```
+   Enter body (Ctrl+D when done, Enter to skip):
+   █
+   ```
+   Press `Enter` to skip
+
+5. **Footer Input:**
+   ```
+   Enter footer (Enter to skip):
+   █
+   ```
+   Press `Enter` to skip
+
+6. **Confirmation Screen:**
+   ```
+   Commit message:
+   feat(core): add greet function for name-based greetings
+   
+   Commit? (y/n)
+   ```
+   Press `y` to commit
+
+Result: Your commit is created with the message `feat(core): add greet function for name-based greetings`
+
+## TUI Keyboard Shortcuts
+
+<ResponseField name="Navigation" type="Keys">
+  - `↑` and `↓` - Move between options
+  - `Enter` - Confirm selection
+</ResponseField>
+
+<ResponseField name="Text Input" type="Keys">
+  - `Enter` - Skip or move to next field
+  - `Ctrl+D` - Complete multi-line input (body)
+  - Regular typing for scope and footer
+</ResponseField>
+
+<ResponseField name="Confirmation" type="Keys">
+  - `y` - Confirm and commit
+  - `n` or `q` - Abort without committing
+</ResponseField>
+
+## Common Use Cases
+
+<AccordionGroup>
+  <Accordion title="Quick commits with auto mode" icon="bolt">
+    For fast commits, use auto mode to let the AI handle everything:
+    
+    ```bash
+    git add .
+    git cx
+    # Select "auto" as the type
+    # Pick a message
+    # Skip scope, body, footer
+    # Confirm with 'y'
+    ```
+  </Accordion>
+  
+  <Accordion title="Detailed commits with body" icon="file-lines">
+    For important changes, add a detailed body:
+    
+    ```bash
+    git add src/api/users.js
+    git cx
+    # Select "feat"
+    # Pick a message
+    # Add scope: "api"
+    # Add body: Explain the implementation details
+    # Press Ctrl+D when done
+    # Confirm
+    ```
+  </Accordion>
+  
+  <Accordion title="Bug fix commits" icon="bug">
+    For bug fixes:
+    
+    ```bash
+    git add src/components/Button.js
+    git cx
+    # Select "fix"
+    # Pick appropriate message
+    # Add scope: "ui"
+    # Add footer: "Closes #123"
+    # Confirm
+    ```
+  </Accordion>
+  
+  <Accordion title="Preview without committing" icon="eye">
+    Test git-cx without creating a commit:
+    
+    ```bash
+    git cx --dry-run
+    ```
+    
+    This lets you try the TUI and see generated messages without committing.
+  </Accordion>
+</AccordionGroup>
+
+## Tips for Better Commits
+
+<Tip>
+  **Stage related changes together** - git-cx works best when each commit represents a single logical change. Use `git add -p` to stage specific hunks.
+</Tip>
+
+<Tip>
+  **Use meaningful scopes** - Define project-specific scopes in your config to maintain consistency across commits.
+</Tip>
+
+<Tip>
+  **Review AI suggestions** - The AI is smart, but always review the generated messages to ensure they accurately describe your changes.
+</Tip>
+
+<Tip>
+  **Add context in the body** - For non-trivial changes, use the body field to explain why the change was needed, not just what changed.
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Error: no staged changes">
+    Make sure you've staged files with `git add` before running `git cx`:
+    
+    ```bash
+    git add <files>
+    git cx
+    ```
+  </Accordion>
+  
+  <Accordion title="AI provider timeout">
+    If the AI is taking too long, increase the timeout:
+    
+    ```bash
+    git cx --timeout 60
+    ```
+    
+    Or set it globally:
+    
+    ```bash
+    git config --global cx.timeout 60
+    ```
+  </Accordion>
+  
+  <Accordion title="Poor quality suggestions">
+    Try:
+    1. Increasing the number of candidates: `git cx --candidates 5`
+    2. Using a different model: `git config --global cx.model gemini-3.0-flash`
+    3. Staging smaller, more focused changes
+  </Accordion>
+  
+  <Accordion title="Want to try different providers">
+    You can override the provider for a single commit:
+    
+    ```bash
+    git cx --provider copilot
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/guides/configuration">
+    Customize git-cx with advanced settings
+  </Card>
+  
+  <Card title="TUI Guide" icon="keyboard" href="/guides/using-git-cx">
+    Master the interactive terminal UI
+  </Card>
+  
+  <Card title="AI Providers" icon="sparkles" href="/guides/ai-providers">
+    Learn about all supported AI providers
+  </Card>
+  
+  <Card title="Commands Reference" icon="terminal" href="/reference/commands">
+    Explore all commands and flags
+  </Card>
+</CardGroup>

@@ -1,0 +1,275 @@
+---
+title: Installation
+description: Install git-cx and configure your AI provider
+---
+
+## Prerequisites
+
+- **Go 1.21 or later** - Required to install git-cx
+- **Git** - Must be installed and configured
+- **AI Provider** - At least one of the supported AI providers (see below)
+
+## Install git-cx
+
+Install git-cx using Go's package manager:
+
+```bash
+go install github.com/hayatosc/git-cx@latest
+```
+
+This will install the `git-cx` binary to your `$GOPATH/bin` directory (typically `~/go/bin`).
+
+<Note>
+  Make sure `$GOPATH/bin` is in your `PATH` so you can run `git cx` from any directory.
+</Note>
+
+## Verify Installation
+
+Check that git-cx is installed correctly:
+
+```bash
+git cx version
+```
+
+You should see output like `git-cx v1.x.x`.
+
+## Configure AI Provider
+
+git-cx supports multiple AI providers. Choose one and follow its setup instructions:
+
+<AccordionGroup>
+  <Accordion title="Gemini (Default)" icon="google">
+    **Recommended for most users**
+    
+    1. Install the [Gemini CLI](https://github.com/google-gemini/gemini-cli)
+    
+    2. Configure git-cx to use Gemini:
+    
+    ```bash
+    git config --global cx.provider gemini
+    git config --global cx.model gemini-2.0-flash
+    ```
+    
+    <Note>
+      Gemini is the default provider, so you can skip the first command if you haven't changed it.
+    </Note>
+  </Accordion>
+  
+  <Accordion title="GitHub Copilot" icon="github">
+    **Best for GitHub Copilot subscribers**
+    
+    1. Install the [GitHub Copilot CLI](https://github.com/github/copilot-cli)
+    
+    2. Configure git-cx to use Copilot:
+    
+    ```bash
+    git config --global cx.provider copilot
+    ```
+  </Accordion>
+  
+  <Accordion title="Claude" icon="anthropic">
+    **For Claude users**
+    
+    1. Install [Claude Code](https://github.com/anthropics/claude-code)
+    
+    2. Configure git-cx to use Claude:
+    
+    ```bash
+    git config --global cx.provider claude
+    ```
+  </Accordion>
+  
+  <Accordion title="Codex" icon="openai">
+    **For OpenAI Codex users**
+    
+    1. Install the [Codex CLI](https://github.com/openai/codex)
+    
+    2. Configure git-cx to use Codex:
+    
+    ```bash
+    git config --global cx.provider codex
+    ```
+  </Accordion>
+  
+  <Accordion title="OpenAI API" icon="key">
+    **Direct OpenAI API integration**
+    
+    1. Get an API key from [OpenAI](https://platform.openai.com/api-keys)
+    
+    2. Configure git-cx:
+    
+    ```bash
+    git config --global cx.provider api
+    git config --global cx.model gpt-4
+    git config --global cx.apiBaseUrl https://api.openai.com/v1
+    ```
+    
+    3. Set your API key as an environment variable:
+    
+    ```bash
+    export OPENAI_API_KEY="sk-..."
+    ```
+    
+    <Tip>
+      Add the `export` command to your `~/.bashrc` or `~/.zshrc` to make it persistent.
+    </Tip>
+  </Accordion>
+  
+  <Accordion title="Custom Provider" icon="code">
+    **Use any CLI tool**
+    
+    You can use any command-line tool that accepts a prompt and outputs text:
+    
+    ```bash
+    git config --global cx.provider custom
+    git config --global cx.command "mycli --prompt {prompt}"
+    ```
+    
+    The `{prompt}` placeholder will be replaced with the generated prompt containing your diff.
+    
+    <Note>
+      Your command must output the generated commit message to stdout.
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
+## Additional Configuration
+
+### Set Number of Candidates
+
+By default, git-cx generates 3 commit message candidates. You can change this:
+
+```bash
+git config --global cx.candidates 5
+```
+
+### Set Timeout
+
+Configure how long to wait for the AI provider (in seconds):
+
+```bash
+git config --global cx.timeout 60
+```
+
+### Enable Emoji Prefixes
+
+Add emojis to commit types (e.g., `✨ feat:` instead of `feat:`):
+
+```bash
+git config --global cx.commit.useEmoji true
+```
+
+### Set Max Subject Length
+
+Limit the commit message subject line length:
+
+```bash
+git config --global cx.commit.maxSubjectLength 72
+```
+
+### Define Custom Scopes
+
+Pre-define scopes that will be suggested in the TUI:
+
+```bash
+git config --global --add cx.commit.scopes api
+git config --global --add cx.commit.scopes ui
+git config --global --add cx.commit.scopes db
+```
+
+## Using Config Files
+
+Instead of git config, you can use a config file in gitconfig format:
+
+<CodeGroup>
+
+```gitconfig Gemini
+[cx]
+  provider = gemini
+  model = gemini-2.0-flash
+  candidates = 3
+  timeout = 30
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+```
+
+```gitconfig OpenAI API
+[cx]
+  provider = api
+  model = gpt-4
+  apiBaseUrl = https://api.openai.com/v1
+  candidates = 5
+  timeout = 60
+[cx "commit"]
+  useEmoji = true
+  maxSubjectLength = 72
+```
+
+```gitconfig Custom
+[cx]
+  provider = custom
+  command = mycli --prompt {prompt}
+  candidates = 3
+  timeout = 30
+```
+
+</CodeGroup>
+
+Then use the config file:
+
+```bash
+git cx --config ~/git-cx-config.gitconfig
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Command not found: git-cx">
+    Make sure `$GOPATH/bin` is in your `PATH`. Add this to your `~/.bashrc` or `~/.zshrc`:
+    
+    ```bash
+    export PATH="$PATH:$(go env GOPATH)/bin"
+    ```
+    
+    Then reload your shell: `source ~/.bashrc` or `source ~/.zshrc`
+  </Accordion>
+  
+  <Accordion title="unknown provider error">
+    Check your provider configuration:
+    
+    ```bash
+    git config --global cx.provider
+    ```
+    
+    Make sure it's one of: `gemini`, `copilot`, `claude`, `codex`, `api`, or `custom`.
+  </Accordion>
+  
+  <Accordion title="AI provider timeout">
+    Increase the timeout value:
+    
+    ```bash
+    git config --global cx.timeout 120
+    ```
+  </Accordion>
+  
+  <Accordion title="View current configuration">
+    See all your git-cx settings:
+    
+    ```bash
+    git cx config
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Make your first AI-generated commit
+  </Card>
+  
+  <Card title="Configuration Guide" icon="gear" href="/guides/configuration">
+    Deep dive into all configuration options
+  </Card>
+</CardGroup>

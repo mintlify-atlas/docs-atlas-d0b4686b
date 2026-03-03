@@ -1,0 +1,114 @@
+---
+title: Introduction
+description: AI-powered git commit messages with Conventional Commits standard
+---
+
+![git-cx demo](/images/demo.gif)
+
+## What is git-cx?
+
+git-cx is an AI-powered git subcommand that generates high-quality Conventional Commits messages from your staged changes. Simply stage your changes, run `git cx`, and choose from multiple AI-generated commit messages in an interactive terminal UI.
+
+No more struggling to write the perfect commit message. git-cx analyzes your diff, understands the changes, and generates multiple commit message candidates that follow the Conventional Commits standard.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="AI-Powered Generation" icon="brain">
+    Leverages multiple AI providers (Gemini, Copilot, Claude, OpenAI) to generate contextual commit messages from your diff
+  </Card>
+  
+  <Card title="Conventional Commits" icon="code-commit">
+    Automatically generates messages following the Conventional Commits standard with proper type, scope, and description
+  </Card>
+  
+  <Card title="Interactive TUI" icon="terminal">
+    Beautiful terminal UI for selecting commit type, message, and adding optional scope, body, and footer
+  </Card>
+  
+  <Card title="Multiple Providers" icon="sparkles">
+    Support for Gemini, GitHub Copilot, Claude, Codex, OpenAI API, and custom CLI providers
+  </Card>
+  
+  <Card title="Highly Configurable" icon="sliders">
+    Configure via git config, config files, or command-line flags. Set custom scopes, emoji support, and more
+  </Card>
+  
+  <Card title="Zero Lock-in" icon="unlock">
+    Works with any git repository. No account creation, no service dependency beyond your chosen AI provider
+  </Card>
+</CardGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Stage your changes">
+    Use `git add` to stage the changes you want to commit, just like normal
+  </Step>
+  
+  <Step title="Run git-cx">
+    Execute `git cx` and the tool analyzes your staged diff
+  </Step>
+  
+  <Step title="AI generates candidates">
+    Your configured AI provider generates multiple commit message candidates
+  </Step>
+  
+  <Step title="Interactive selection">
+    Use the TUI to select commit type, choose a message, and optionally add scope, body, or footer
+  </Step>
+  
+  <Step title="Commit created">
+    Confirm and git-cx creates the commit with your selected message
+  </Step>
+</Steps>
+
+## Supported Commit Types
+
+git-cx supports all standard Conventional Commits types:
+
+- **feat** - A new feature
+- **fix** - A bug fix
+- **docs** - Documentation only changes
+- **style** - Changes that do not affect the meaning of the code
+- **refactor** - A code change that neither fixes a bug nor adds a feature
+- **perf** - A code change that improves performance
+- **test** - Adding missing tests or correcting existing tests
+- **build** - Changes that affect the build system or external dependencies
+- **ci** - Changes to CI configuration files and scripts
+- **chore** - Other changes that don't modify src or test files
+- **revert** - Reverts a previous commit
+
+Plus an **auto** mode where the AI selects both the type and complete message for you.
+
+## Get Started
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install git-cx using Go in under a minute
+  </Card>
+  
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Make your first AI-generated commit in 5 minutes
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/guides/configuration">
+    Configure providers, models, and commit preferences
+  </Card>
+  
+  <Card title="TUI Guide" icon="keyboard" href="/guides/using-git-cx">
+    Learn all keyboard shortcuts and navigation
+  </Card>
+</CardGroup>
+
+## Why Conventional Commits?
+
+The [Conventional Commits](https://www.conventionalcommits.org/) specification provides a standardized format for commit messages that:
+
+- Makes it easy to understand the nature of changes at a glance
+- Enables automatic changelog generation
+- Triggers semantic version bumps based on commit types
+- Improves collaboration and code review efficiency
+- Creates a more navigable project history
+
+git-cx makes following this standard effortless by generating compliant messages automatically.

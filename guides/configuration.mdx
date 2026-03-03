@@ -1,0 +1,512 @@
+---
+title: Configuration
+description: How to configure git-cx using git config, config files, and command-line flags
+---
+
+## Configuration Methods
+
+git-cx supports three configuration methods with the following precedence (highest to lowest):
+
+1. **Command-line flags** - Override everything
+2. **Config file** (`--config` flag) - Overrides git config
+3. **Git config** - Default configuration storage
+
+This layered approach lets you set defaults globally while overriding specific values per-invocation.
+
+## Git Config (Recommended)
+
+The recommended way to configure git-cx is through git's configuration system.
+
+### Setting Values
+
+<Tabs>
+  <Tab title="Global (All repositories)">
+    ```bash
+    git config --global cx.provider gemini
+    git config --global cx.model gemini-2.0-flash
+    git config --global cx.candidates 3
+    ```
+  </Tab>
+  <Tab title="Local (Current repository)">
+    ```bash
+    git config cx.provider copilot
+    git config cx.candidates 5
+    ```
+  </Tab>
+</Tabs>
+
+### Viewing Configuration
+
+Check your current git-cx configuration:
+
+```bash
+git cx config
+```
+
+Output:
+```
+provider:                  gemini
+model:                     gemini-2.0-flash
+candidates:                3
+timeout:                   30
+apiKey (OPENAI_API_KEY):   <not set>
+commit.useEmoji:           false
+commit.maxSubjectLength:   100
+```
+
+### Configuration Keys
+
+#### Provider Settings
+
+<ParamField path="cx.provider" type="string" default="gemini">
+  AI provider to use for generating commit messages.
+  
+  **Valid values:** `gemini`, `copilot`, `claude`, `codex`, `api`, `custom`
+  
+  ```bash
+  git config --global cx.provider gemini
+  ```
+</ParamField>
+
+<ParamField path="cx.model" type="string" default="gemini-3.0-flash">
+  Model name to pass to the AI provider. Provider-specific models vary.
+  
+  ```bash
+  # Gemini
+  git config --global cx.model gemini-2.0-flash
+  
+  # OpenAI API
+  git config --global cx.model gpt-4o
+  ```
+  
+  <Note>
+    Some providers (like Copilot) use their default model if this is not set.
+  </Note>
+</ParamField>
+
+<ParamField path="cx.candidates" type="integer" default="3">
+  Number of commit message candidates to generate.
+  
+  ```bash
+  git config --global cx.candidates 5
+  ```
+  
+  <Warning>
+    Higher values may increase AI provider costs and response time.
+  </Warning>
+</ParamField>
+
+<ParamField path="cx.timeout" type="integer" default="30">
+  Request timeout in seconds for AI provider calls.
+  
+  ```bash
+  git config --global cx.timeout 60
+  ```
+</ParamField>
+
+#### Custom Provider Settings
+
+<ParamField path="cx.command" type="string">
+  Command template for the `custom` provider. Use `{prompt}` as a placeholder.
+  
+  ```bash
+  git config --global cx.command "ollama run llama3 --prompt {prompt}"
+  ```
+  
+  **Required** when `cx.provider = custom`.
+</ParamField>
+
+#### API Provider Settings
+
+<ParamField path="cx.apiBaseUrl" type="string" default="https://api.openai.com/v1">
+  Base URL for OpenAI-compatible API endpoints.
+  
+  ```bash
+  git config --global cx.apiBaseUrl https://api.openai.com/v1
+  
+  # Or use a custom endpoint
+  git config --global cx.apiBaseUrl https://my-llm-proxy.com/v1
+  ```
+  
+  **Required** when `cx.provider = api`.
+</ParamField>
+
+<ParamField path="OPENAI_API_KEY" type="environment variable">
+  API key for the `api` provider. Set as an environment variable, not in git config.
+  
+  ```bash
+  export OPENAI_API_KEY=sk-...
+  git cx
+  
+  # Or inline
+  OPENAI_API_KEY=sk-... git cx
+  ```
+  
+  **Required** when `cx.provider = api`.
+</ParamField>
+
+#### Commit Formatting
+
+<ParamField path="cx.commit.useEmoji" type="boolean" default="false">
+  Prefix commit type with an emoji (e.g., ✨ for feat, 🐛 for fix).
+  
+  ```bash
+  git config --global cx.commit.useEmoji true
+  ```
+  
+  Result: `✨ feat: add new feature`
+</ParamField>
+
+<ParamField path="cx.commit.maxSubjectLength" type="integer" default="100">
+  Maximum length of the commit subject line. Set to 0 for no limit.
+  
+  ```bash
+  git config --global cx.commit.maxSubjectLength 72
+  ```
+</ParamField>
+
+<ParamField path="cx.commit.scopes" type="string (multi-value)">
+  Predefined scope options. Can be set multiple times to define a list.
+  
+  ```bash
+  git config --global cx.commit.scopes api
+  git config --global --add cx.commit.scopes ui
+  git config --global --add cx.commit.scopes auth
+  git config --global --add cx.commit.scopes database
+  ```
+  
+  <Note>
+    When scopes are configured, the TUI may display them as suggestions. This helps maintain consistency across your project.
+  </Note>
+</ParamField>
+
+## Config Files
+
+Use gitconfig-format files for shareable team configurations or provider-specific settings.
+
+### Using Config Files
+
+Pass a config file with the `--config` flag:
+
+```bash
+git cx --config ~/.config/git-cx/gemini.gitconfig
+git cx --config ./team-cx-config.gitconfig
+```
+
+### File Format
+
+Config files use standard gitconfig syntax:
+
+<CodeGroup>
+```gitconfig Gemini Example
+[cx]
+  provider = gemini
+  model = gemini-2.0-flash
+  candidates = 3
+  timeout = 30
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+  scopes = api
+  scopes = ui
+  scopes = docs
+```
+
+```gitconfig GitHub Copilot Example
+[cx]
+  provider = copilot
+  # model = gpt-4o   # omit to use Copilot's default
+  candidates = 3
+  timeout = 30
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+```
+
+```gitconfig Claude Example
+[cx]
+  provider = claude
+  # model = claude-3-5-sonnet
+  candidates = 3
+  timeout = 30
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+```
+
+```gitconfig OpenAI API Example
+[cx]
+  provider = api
+  model = gpt-4o
+  apiBaseUrl = https://api.openai.com/v1
+  # OPENAI_API_KEY=... git cx
+[cx "commit"]
+  useEmoji = false
+  maxSubjectLength = 100
+```
+
+```gitconfig Custom Provider Example
+[cx]
+  provider = custom
+  command = ollama run llama3 --prompt {prompt}
+  candidates = 3
+  timeout = 60
+[cx "commit"]
+  useEmoji = true
+  maxSubjectLength = 80
+```
+</CodeGroup>
+
+### Example Config Files
+
+git-cx includes example config files in the repository:
+
+```bash
+# Clone the repository to access examples
+git clone https://github.com/hayatosc/git-cx.git
+cd git-cx/examples
+
+# Use an example config
+git cx --config examples/gemini.gitconfig
+git cx --config examples/copilot.gitconfig
+git cx --config examples/claude.gitconfig
+git cx --config examples/api.gitconfig
+```
+
+## Command-Line Flags
+
+Override any configuration value with flags:
+
+### Provider Flags
+
+```bash
+# Change provider
+git cx --provider copilot
+
+# Change model
+git cx --model gpt-4o
+
+# Change candidate count
+git cx --candidates 5
+
+# Change timeout
+git cx --timeout 60
+```
+
+### Custom Provider Flags
+
+```bash
+# Custom provider command
+git cx --provider custom --command "ollama run llama3 --prompt {prompt}"
+```
+
+### API Provider Flags
+
+```bash
+# API provider with custom endpoint
+OPENAI_API_KEY=sk-... git cx \
+  --provider api \
+  --model gpt-4o \
+  --api-base-url https://my-proxy.com/v1
+```
+
+### Commit Formatting Flags
+
+```bash
+# Enable emoji
+git cx --use-emoji
+
+# Set max subject length
+git cx --max-subject-length 72
+```
+
+### Utility Flags
+
+```bash
+# Dry run (preview without committing)
+git cx --dry-run
+
+# Use config file
+git cx --config ./my-config.gitconfig
+```
+
+### Flag Reference
+
+| Flag | Type | Description |
+|------|------|-------------|
+| `--config <path>` | string | Path to gitconfig-format config file |
+| `--provider <name>` | string | AI provider (gemini, copilot, claude, codex, api, custom) |
+| `--model <name>` | string | Model name for the provider |
+| `--candidates <n>` | integer | Number of commit message candidates |
+| `--timeout <n>` | integer | Request timeout in seconds |
+| `--command <template>` | string | Command template for custom provider |
+| `--api-base-url <url>` | string | Base URL for API provider |
+| `--use-emoji` | boolean | Prefix commit type with emoji |
+| `--max-subject-length <n>` | integer | Max subject line length |
+| `--dry-run` | boolean | Preview commit message without committing |
+
+## Configuration Precedence Example
+
+Understanding how configuration values are merged:
+
+```bash
+# Git config (global)
+git config --global cx.provider gemini
+git config --global cx.candidates 3
+
+# Config file: custom.gitconfig
+[cx]
+  provider = copilot
+  timeout = 60
+
+# Command line
+git cx --config custom.gitconfig --candidates 5
+```
+
+**Effective configuration:**
+- `provider`: `copilot` (from config file, overrides git config)
+- `candidates`: `5` (from flag, overrides config file)
+- `timeout`: `60` (from config file)
+- Other values: from git config or defaults
+
+## Environment Variables
+
+### OPENAI_API_KEY
+
+Required for the `api` provider:
+
+```bash
+# Set for current session
+export OPENAI_API_KEY=sk-...
+git cx
+
+# Or pass inline
+OPENAI_API_KEY=sk-... git cx
+```
+
+<Warning>
+  Never commit API keys to git config files or version control. Always use environment variables for secrets.
+</Warning>
+
+## Team Configuration
+
+For team consistency, commit a config file to your repository:
+
+<Steps>
+  <Step title="Create team config">
+    ```bash .git-cx.config
+    [cx]
+      provider = gemini
+      model = gemini-2.0-flash
+      candidates = 3
+      timeout = 30
+    [cx "commit"]
+      useEmoji = false
+      maxSubjectLength = 72
+      scopes = frontend
+      scopes = backend
+      scopes = api
+      scopes = database
+      scopes = docs
+    ```
+  </Step>
+  
+  <Step title="Document usage">
+    Add to your project README:
+    
+    ```markdown README.md
+    ## Committing Changes
+    
+    Use git-cx with the project config:
+    
+    ```bash
+    git cx --config .git-cx.config
+    ```
+  </Step>
+  
+  <Step title="Optional: Create alias">
+    Team members can create a git alias:
+    
+    ```bash
+    git config --global alias.cx-team '!git cx --config .git-cx.config'
+    
+    # Usage
+    git cx-team
+    ```
+  </Step>
+</Steps>
+
+## Default Values
+
+If no configuration is provided, git-cx uses these defaults:
+
+| Key | Default Value |
+|-----|---------------|
+| `cx.provider` | `gemini` |
+| `cx.model` | `gemini-3.0-flash` |
+| `cx.candidates` | `3` |
+| `cx.timeout` | `30` |
+| `cx.apiBaseUrl` | `https://api.openai.com/v1` |
+| `cx.commit.useEmoji` | `false` |
+| `cx.commit.maxSubjectLength` | `100` |
+| `cx.commit.scopes` | (empty) |
+
+## Validation
+
+git-cx validates configuration on startup:
+
+<Accordion title="Unknown provider error">
+  ```
+  Error: unknown provider: "gemni" (valid providers: gemini, copilot, claude, 
+  codex, api, custom; set via 'git config cx.provider PROVIDER')
+  ```
+  
+  **Fix:** Use a valid provider name.
+</Accordion>
+
+<Accordion title="Missing cx.command for custom provider">
+  ```
+  Error: cx.command is not set (required for custom provider)
+  ```
+  
+  **Fix:** Set the command template:
+  ```bash
+  git config cx.command "your-cli --prompt {prompt}"
+  ```
+</Accordion>
+
+<Accordion title="Missing cx.apiBaseUrl for api provider">
+  ```
+  Error: cx.apiBaseUrl is not set (required for api provider)
+  ```
+  
+  **Fix:** Set the API base URL:
+  ```bash
+  git config cx.apiBaseUrl https://api.openai.com/v1
+  ```
+</Accordion>
+
+<Accordion title="Missing cx.model for api provider">
+  ```
+  Error: cx.model is not set (required for api provider)
+  ```
+  
+  **Fix:** Specify the model:
+  ```bash
+  git config cx.model gpt-4o
+  ```
+</Accordion>
+
+<Accordion title="Invalid candidates or timeout">
+  ```
+  Error: candidates must be greater than 0
+  Error: timeout must be greater than 0
+  ```
+  
+  **Fix:** Use positive integer values.
+</Accordion>
+
+## Next Steps
+
+- [Set up AI providers](/guides/ai-providers) for your configuration
+- [Learn the TUI workflow](/guides/using-git-cx)
