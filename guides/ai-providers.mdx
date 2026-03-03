@@ -250,7 +250,7 @@ OpenAI Codex via the Codex CLI.
     ```bash
     git config --global cx.provider codex
     # Optional: specify model
-    git config --global cx.model gpt-5
+    git config --global cx.model gpt-4-turbo
     ```
   </Step>
 </Steps>
@@ -260,14 +260,14 @@ OpenAI Codex via the Codex CLI.
 <CodeGroup>
 ```bash Git Config
 git config --global cx.provider codex
-git config --global cx.model gpt-5
+git config --global cx.model gpt-4-turbo
 git config --global cx.candidates 3
 ```
 
 ```gitconfig Config File
 [cx]
   provider = codex
-  # model = gpt-5
+  # model = gpt-4-turbo
   candidates = 3
   timeout = 30
 ```
@@ -279,7 +279,7 @@ git config --global cx.candidates 3
   git-cx executes:
   
   ```bash
-  codex exec "<prompt>" --model gpt-5
+  codex exec "<prompt>" --model gpt-4-turbo
   ```
   
   Note: Uses `exec` as the prompt flag instead of `-p`.

@@ -15,7 +15,7 @@ Google's Gemini models via the [Gemini CLI](https://github.com/google-gemini/gem
 ```gitconfig examples/gemini.gitconfig
 [cx]
   provider = gemini
-  model = gemini-2.0-flash
+  model = gemini-3.0-flash
   candidates = 3
   timeout = 30
 [cx "commit"]
@@ -35,12 +35,12 @@ git cx --config examples/gemini.gitconfig
 
 # Or set globally
 git config --global cx.provider gemini
-git config --global cx.model gemini-2.0-flash
+git config --global cx.model gemini-3.0-flash
 ```
 </CodeGroup>
 
 <Tip>
-Gemini Flash models are fast and cost-effective for commit message generation. Use `gemini-2.0-flash` for the latest version.
+Gemini Flash models are fast and cost-effective for commit message generation. Use `gemini-3.0-flash` for the latest version.
 </Tip>
 
 ### GitHub Copilot
@@ -118,7 +118,7 @@ OpenAI's Codex models via the [Codex CLI](https://github.com/openai/codex).
 ```gitconfig examples/codex.gitconfig
 [cx]
   provider = codex
-  # model = gpt-5
+  # model = gpt-4-turbo
   candidates = 3
   timeout = 30
 [cx "commit"]
@@ -138,7 +138,7 @@ git cx --config examples/codex.gitconfig
 
 # Or set globally
 git config --global cx.provider codex
-git config --global cx.model gpt-5
+git config --global cx.model gpt-4-turbo
 ```
 </CodeGroup>
 
@@ -150,7 +150,7 @@ Direct API integration with OpenAI or compatible endpoints (OpenRouter, Azure Op
 ```gitconfig examples/api.gitconfig
 [cx]
   provider = api
-  model = gpt-5
+  model = gpt-4o
   apiBaseUrl = https://api.openai.com/v1
   # OPENAI_API_KEY=... git cx
 [cx "commit"]
@@ -231,7 +231,7 @@ Set repository-specific config (no `--global`):
 ```bash
 cd ~/projects/my-app
 git config cx.provider gemini
-git config cx.model gemini-2.0-flash
+git config cx.model gemini-3.0-flash
 git config cx.commit.scopes frontend
 git config cx.commit.scopes backend
 git config cx.commit.scopes shared
@@ -281,7 +281,7 @@ Now `git cx` in this repo uses these settings automatically.
 ```gitconfig
 [cx]
   provider = gemini
-  model = gemini-2.0-flash
+  model = gemini-3.0-flash
   candidates = 4
 
 [cx "commit"]
@@ -359,7 +359,7 @@ git cx
 ```gitconfig
 [cx]
   provider = gemini
-  model = gemini-2.0-flash
+  model = gemini-3.0-flash
 ```
 
 **Usage:**
@@ -550,7 +550,7 @@ git cx config
 Output:
 ```
 provider:                  gemini
-model:                     gemini-2.0-flash
+model:                     gemini-3.0-flash
 candidates:                3
 timeout:                   30
 commit.useEmoji:           false
